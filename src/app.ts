@@ -18,7 +18,7 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.get('/api/v1/ping', (req, res) => {
+app.get('/ping', (req, res) => {
   res.json({ message: 'alive' });
 });
 
