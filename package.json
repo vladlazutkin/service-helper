@@ -7,9 +7,7 @@
     "start": "ts-node src/index.ts",
     "dev": "nodemon src/index.ts",
     "build": "tsc",
-    "lint": "eslint --fix src test",
-    "typecheck": "tsc --noEmit",
-    "vercel-build": "echo hello"
+    "lint": "eslint --fix src test"
   },
   "keywords": [],
   "author": "Vlad Lazutkin",
