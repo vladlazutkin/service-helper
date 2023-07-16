@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 const { createWorker } = require('tesseract.js');
 import { v4 as uuidv4 } from 'uuid';
+import path from 'path';
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -25,10 +26,13 @@ router.post('/', upload.single('file'), async (req: any, res) => {
   const rectangle = req.body.dimensions
     ? JSON.parse(req.body.dimensions)
     : null;
+  // console.log(
+  //   path.join(__dirname.slice(0, __dirname.indexOf('/src')), req.file.path)
+  // );
   const {
     data: { text },
   } = await worker.recognize(
-    req.file.path,
+    path.join(__dirname.slice(0, __dirname.indexOf('/src')), req.file.path),
     rectangle ? { rectangle } : undefined
   );
   await worker.terminate();
