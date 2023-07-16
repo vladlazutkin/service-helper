@@ -15,7 +15,9 @@ export const io = new Server(server, {
   },
 });
 
-io.on('connection', () => {});
+io.on('connection', () => {
+  console.log('Client connected');
+});
 
 const port = process.env.PORT || 5000;
 
