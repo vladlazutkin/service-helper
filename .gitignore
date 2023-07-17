@@ -10,6 +10,9 @@ pids
 images
 videos
 frames
+!videos/.gitkeep
+!frames/.gitkeep
+!images/.gitkeep
 *.pid
 *.seed
 *.pid.lock
