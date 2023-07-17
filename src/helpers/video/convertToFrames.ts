@@ -20,16 +20,15 @@ export const convertToFrames = async (
     }
     const tempPath = `videos/temp/${uuidv4()}.mp4`;
     await createVideo
-      .setVideoStartTime(startTime)
-      .setVideoDuration(duration)
+      .setVideoStartTime(Math.round(startTime))
+      .setVideoDuration(Math.round(duration))
       .save(tempPath);
 
+    logger.debug(`Video trimmed successfully`);
     finalPath = tempPath;
   }
   const video = await new ffmpeg(finalPath);
   const files = await video.fnExtractFrameToJPG(outputPath, {
-    start_time: startTime,
-    duration_time: duration,
     every_n_frames: nFrames,
   });
   if (hasTemp) {
