@@ -78,7 +78,7 @@ router.post('/search', authenticateJWT, async (req: any, res) => {
 
     res.json(uniques);
   } catch (e: any) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: e.message || 'Error' });
   }
 });
 
@@ -86,19 +86,19 @@ router.post<{}, {}, { name: string; tracks: string[] }>(
   '/create-playlist',
   authenticateJWT,
   async (req, res) => {
-    const name = req.body.name;
-    const tracks = req.body.tracks;
-    const user = getUserFromRequest(req);
-    if (!user.spotifyAccessToken || !user.spotifyRefreshToken) {
-      return res.status(401).json({
-        message: 'Token expired or not provided',
-      });
-    }
-    const userSpotifyApi = await createLoggedInSpotifyApi(
-      user.spotifyAccessToken,
-      user.spotifyRefreshToken
-    );
     try {
+      const name = req.body.name;
+      const tracks = req.body.tracks;
+      const user = getUserFromRequest(req);
+      if (!user.spotifyAccessToken || !user.spotifyRefreshToken) {
+        return res.status(401).json({
+          message: 'Token expired or not provided',
+        });
+      }
+      const userSpotifyApi = await createLoggedInSpotifyApi(
+        user.spotifyAccessToken,
+        user.spotifyRefreshToken
+      );
       const playlist = await withUpdateAccessToken(
         (api) => api.createPlaylist(name),
         userSpotifyApi,
@@ -125,69 +125,73 @@ router.post<{}, {}, { name: string; tracks: string[] }>(
 );
 
 router.get('/callback', async (req: any, res) => {
-  const userId = req.query.state;
+  try {
+    const userId = req.query.state;
 
-  if (!userId) {
-    logger.debug('no user id provided in spotify callback');
-    return res.status(401).json({
-      message: 'no user id',
+    if (!userId) {
+      logger.debug('no user id provided in spotify callback');
+      return res.status(401).json({
+        message: 'no user id',
+      });
+    }
+
+    const user = await UserModel.findById(userId);
+
+    if (!user) {
+      logger.debug('user doesnt exits in spotify callback');
+      return res.status(401).json({
+        message: 'no user',
+      });
+    }
+
+    // const BASE64_AUTHORIZATION = new Buffer(
+    //   `${process.env.CLIENT_ID!}:${process.env.CLIENT_SECRET!}`
+    // ).toString('base64');
+    //
+    // const redirectUrl = `http://localhost:${process.env.PORT}/api/v1/spotify/callback`;
+
+    const data = await spotifyApi.authorizationCodeGrant(req.query.code);
+
+    const accessToken = data.body.access_token;
+    const refreshToken = data.body.refresh_token;
+    if (accessToken && refreshToken) {
+      await UserModel.findByIdAndUpdate(userId, {
+        spotifyAccessToken: accessToken,
+        spotifyRefreshToken: refreshToken,
+      });
+    }
+
+    // const spotifyResponse = await axios.post(
+    //   'https://accounts.spotify.com/api/token',
+    //   queryString.stringify({
+    //     grant_type: 'authorization_code',
+    //     code: req.query.code,
+    //     redirect_uri: redirectUrl,
+    //   }),
+    //   {
+    //     headers: {
+    //       Authorization: `Basic ${BASE64_AUTHORIZATION}`,
+    //       'Content-Type': 'application/x-www-form-urlencoded',
+    //     },
+    //   }
+    // );
+
+    // console.log(spotifyResponse.data);
+    // const accessToken = spotifyResponse.data.access_token;
+    // const refreshToken = spotifyResponse.data.refresh_token;
+    // if (accessToken) {
+    //   await UserModel.findByIdAndUpdate(userId, {
+    //     spotifyAccessToken: accessToken,
+    //     refreshToken
+    //   });
+    // }
+
+    res.json({
+      message: 'success',
     });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message || 'Error' });
   }
-
-  const user = await UserModel.findById(userId);
-
-  if (!user) {
-    logger.debug('user doesnt exits in spotify callback');
-    return res.status(401).json({
-      message: 'no user',
-    });
-  }
-
-  // const BASE64_AUTHORIZATION = new Buffer(
-  //   `${process.env.CLIENT_ID!}:${process.env.CLIENT_SECRET!}`
-  // ).toString('base64');
-  //
-  // const redirectUrl = `http://localhost:${process.env.PORT}/api/v1/spotify/callback`;
-
-  const data = await spotifyApi.authorizationCodeGrant(req.query.code);
-
-  const accessToken = data.body.access_token;
-  const refreshToken = data.body.refresh_token;
-  if (accessToken && refreshToken) {
-    await UserModel.findByIdAndUpdate(userId, {
-      spotifyAccessToken: accessToken,
-      spotifyRefreshToken: refreshToken,
-    });
-  }
-
-  // const spotifyResponse = await axios.post(
-  //   'https://accounts.spotify.com/api/token',
-  //   queryString.stringify({
-  //     grant_type: 'authorization_code',
-  //     code: req.query.code,
-  //     redirect_uri: redirectUrl,
-  //   }),
-  //   {
-  //     headers: {
-  //       Authorization: `Basic ${BASE64_AUTHORIZATION}`,
-  //       'Content-Type': 'application/x-www-form-urlencoded',
-  //     },
-  //   }
-  // );
-
-  // console.log(spotifyResponse.data);
-  // const accessToken = spotifyResponse.data.access_token;
-  // const refreshToken = spotifyResponse.data.refresh_token;
-  // if (accessToken) {
-  //   await UserModel.findByIdAndUpdate(userId, {
-  //     spotifyAccessToken: accessToken,
-  //     refreshToken
-  //   });
-  // }
-
-  res.json({
-    message: 'success',
-  });
 });
 
 export default router;
