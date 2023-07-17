@@ -78,7 +78,8 @@ router.post('/search', authenticateJWT, async (req: any, res) => {
 
     res.json(uniques);
   } catch (e: any) {
-    res.status(500).json({ error: e.message || 'Error' });
+    console.log(e);
+    res.status(500).json({ error: e.message || e.msg || 'Error' });
   }
 });
 
@@ -119,7 +120,8 @@ router.post<{}, {}, { name: string; tracks: string[] }>(
         url: playlist.body.external_urls.spotify,
       });
     } catch (e: any) {
-      res.status(500).json({ error: e.message });
+      console.log(e);
+      res.status(500).json({ error: e.message || e.msg || 'Error' });
     }
   }
 );
@@ -190,7 +192,8 @@ router.get('/callback', async (req: any, res) => {
       message: 'success',
     });
   } catch (e: any) {
-    res.status(500).json({ error: e.message || 'Error' });
+    console.log(e);
+    res.status(500).json({ error: e.message || e.msg || 'Error' });
   }
 });
 

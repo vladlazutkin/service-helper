@@ -37,7 +37,8 @@ router.post('/youtube/remove', async (req, res) => {
     fs.unlinkSync(`videos/${req.body.id}.mp4`);
     res.json({ message: 'success' });
   } catch (e: any) {
-    res.status(500).json({ error: e.message });
+    console.log(e);
+    res.status(500).json({ error: e.message || e.msg || 'Error' });
   }
 });
 
@@ -167,7 +168,8 @@ router.post('/youtube', async (req, res) => {
       url,
     });
   } catch (e: any) {
-    res.status(500).json({ error: e.message });
+    console.log(e);
+    res.status(500).json({ error: e.message || e.msg || 'Error' });
   }
 });
 
@@ -200,7 +202,7 @@ router.post<{}, {}, { id: string; data: RangeMap[]; language: string }>(
       scheduler.addWorker(worker);
 
       // Remove all ranges
-      await VideoRangeModel.deleteMany({ vide: video._id });
+      await VideoRangeModel.deleteMany({ video: video._id });
 
       const response = await Promise.all(
         data.map(async ({ range, dimensions }) => {
@@ -263,7 +265,8 @@ router.post<{}, {}, { id: string; data: RangeMap[]; language: string }>(
 
       res.json(response);
     } catch (e: any) {
-      res.status(500).json({ error: e.message });
+      console.log(e);
+      res.status(500).json({ error: e.message || e.msg || 'Error' });
     }
   }
 );
@@ -308,7 +311,8 @@ router.post('/', upload.single('file'), async (req: any, res) => {
       text: textData,
     });
   } catch (e: any) {
-    res.status(500).json({ error: e.message });
+    console.log(e);
+    res.status(500).json({ error: e.message || e.msg || 'Error' });
   }
 });
 
@@ -341,7 +345,8 @@ router.post<{}, {}, { id: string; data: RangeMap[]; language: string }>(
       video.videoRanges = ranges;
       res.json(video);
     } catch (e: any) {
-      res.status(500).json({ error: e.message });
+      console.log(e);
+      res.status(500).json({ error: e.message || e.msg || 'Error' });
     }
   }
 );

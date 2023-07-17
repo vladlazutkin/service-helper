@@ -37,7 +37,8 @@ router.post('/', upload.single('file'), async (req: any, res) => {
       text,
     });
   } catch (e: any) {
-    res.status(500).json({ error: e.message || 'Error' });
+    console.log(e);
+    res.status(500).json({ error: e.message || e.msg || 'Error' });
   }
 });
 

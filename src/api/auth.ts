@@ -21,7 +21,8 @@ router.post('/login-spotify', jwtAuthMiddleware, async (req, res) => {
 
     return res.status(200).json({ message: 'Url generated', url });
   } catch (e: any) {
-    res.status(500).json({ error: e.message || 'Error' });
+    console.log(e);
+    res.status(500).json({ error: e.message || e.msg || 'Error' });
   }
 });
 
@@ -49,7 +50,8 @@ router.post('/login', async (req: any, res) => {
         .json({ message: 'User Logged in Successfully', token });
     });
   } catch (e: any) {
-    res.status(500).json({ error: e.message || 'Error' });
+    console.log(e);
+    res.status(500).json({ error: e.message || e.msg || 'Error' });
   }
 });
 
@@ -81,7 +83,8 @@ router.post('/register', async (req: any, res) => {
       });
     });
   } catch (e: any) {
-    res.status(500).json({ error: e.message || 'Error' });
+    console.log(e);
+    res.status(500).json({ error: e.message || e.msg || 'Error' });
   }
 });
 
