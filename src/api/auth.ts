@@ -3,21 +3,17 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { UserModel } from '../models/user';
 import jwtAuthMiddleware from '../middlewares/jwt.auth.middleware';
-import { getUserFromRequest } from '../helpers/getUserFromRequest';
+import { buildSpotifyCallbackUrl } from '../helpers/spotify';
+import { getUserFromRequest } from '../helpers/shared/getUserFromRequest';
+import { logger } from '../logger';
+import { spotifyApi } from '../external-api/spotify';
 
 const router = express.Router();
 
-router.post('/login-spotify', jwtAuthMiddleware, async (req, res) => {
+router.get('/login-spotify', jwtAuthMiddleware, async (req, res) => {
   try {
     const user = getUserFromRequest(req);
-    const userId = user._id;
-
-    const redirectUrl = `http://localhost:${process.env.PORT}/api/v1/spotify/callback`;
-    const url = `https://accounts.spotify.com/authorize?client_id=${
-      process.env.CLIENT_ID
-    }&response_type=code&state=${userId}&scope=playlist-modify-public,playlist-modify-private,&redirect_uri=${encodeURIComponent(
-      redirectUrl
-    )}`;
+    const url = buildSpotifyCallbackUrl(user._id);
 
     return res.status(200).json({ message: 'Url generated', url });
   } catch (e: any) {
@@ -81,6 +77,46 @@ router.post('/register', async (req: any, res) => {
       user.save().then(() => {
         res.json({ message: 'User registered successfully' });
       });
+    });
+  } catch (e: any) {
+    console.log(e);
+    res.status(500).json({ error: e.message || e.msg || 'Error' });
+  }
+});
+
+router.get('/spotify/callback', async (req: any, res) => {
+  try {
+    const userId = req.query.state;
+
+    if (!userId) {
+      logger.debug('no user id provided in spotify callback');
+      return res.status(401).json({
+        message: 'no user id',
+      });
+    }
+
+    const user = await UserModel.findById(userId);
+
+    if (!user) {
+      logger.debug('user doesnt exits in spotify callback');
+      return res.status(401).json({
+        message: 'no user',
+      });
+    }
+
+    const data = await spotifyApi.authorizationCodeGrant(req.query.code);
+
+    const accessToken = data.body.access_token;
+    const refreshToken = data.body.refresh_token;
+    if (accessToken && refreshToken) {
+      await UserModel.findByIdAndUpdate(userId, {
+        spotifyAccessToken: accessToken,
+        spotifyRefreshToken: refreshToken,
+      });
+    }
+
+    res.json({
+      message: 'Successfully logged in. You can close this page',
     });
   } catch (e: any) {
     console.log(e);

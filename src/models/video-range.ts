@@ -4,7 +4,17 @@ import { Dimensions, Range } from '../interfaces/Range';
 
 export enum VideoRangeStatus {
   RECOGNIZING = 'recognizing',
+  VIDEO_DOWNLOADED = 'video-downloaded',
   RECOGNIZED = 'recognized',
+}
+
+interface SpotifyTrack {
+  id: string;
+  name: string;
+  imageUrl: string;
+  artistName: string;
+  externalUrl: string;
+  previewUrl: string;
 }
 
 export interface VideoRange {
@@ -13,7 +23,10 @@ export interface VideoRange {
   result: string[];
   user: User;
   range: Range;
+  progress: number;
   dimensions: Dimensions;
+  spotifyTracks: SpotifyTrack[];
+  playlistUrl: string;
 }
 
 const videoRangeSchema = new Schema({
@@ -24,6 +37,7 @@ const videoRangeSchema = new Schema({
   },
   video: { ref: 'Video', type: Schema.Types.ObjectId },
   result: [{ type: String, required: true }],
+  progress: { type: Number },
   range: {
     id: { type: String },
     start: { type: Number },
@@ -35,6 +49,17 @@ const videoRangeSchema = new Schema({
     width: { type: Number },
     height: { type: Number },
   },
+  spotifyTracks: [
+    {
+      id: { type: String },
+      name: { type: String },
+      imageUrl: { type: String },
+      artistName: { type: String },
+      externalUrl: { type: String },
+      previewUrl: { type: String },
+    },
+  ],
+  playlistUrl: { type: String },
 });
 
 export const VideoRangeModel = model<VideoRange>(

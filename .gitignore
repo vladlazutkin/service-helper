@@ -10,8 +10,6 @@ pids
 images
 videos
 frames
-videos/temp/*
-!videos/temp/.gitkeep
 !videos/.gitkeep
 !frames/.gitkeep
 !images/.gitkeep

@@ -3,6 +3,7 @@ export interface Range {
   start: number;
   stop: number;
 }
+
 export interface Dimensions {
   left: number;
   top: number;

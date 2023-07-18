@@ -1,0 +1,144 @@
+import express from 'express';
+import { createScheduler, createWorker, LoggerMessage } from 'tesseract.js';
+import { VideoModel } from '../../models/video';
+import { VideoRangeModel } from '../../models/video-range';
+import { getUserFromRequest } from '../../helpers/shared/getUserFromRequest';
+import jwtAuthMiddleware from '../../middlewares/jwt.auth.middleware';
+import multerUpload from '../../middlewares/multer.middleware';
+import { convertToFrames } from '../../helpers/video';
+import { logger } from '../../logger';
+import youtube from './youtube';
+
+const router = express.Router();
+
+router.use('/youtube', youtube);
+
+router.get('/', jwtAuthMiddleware, async (req, res) => {
+  try {
+    const user = getUserFromRequest(req);
+
+    const videos = await VideoModel.find({ user: user._id });
+
+    const withRanges = await Promise.all(
+      videos.map(async (video) => {
+        const ranges = await VideoRangeModel.find({
+          video: video._id,
+        });
+
+        return {
+          ...video.toObject(),
+          videoRanges: ranges,
+        };
+      })
+    );
+
+    return res.status(200).json(withRanges);
+  } catch (e: any) {
+    console.log(e);
+    res.status(500).json({ error: e.message || e.msg || 'Error' });
+  }
+});
+
+router.get('/:id', jwtAuthMiddleware, async (req, res) => {
+  try {
+    const { id: videoId } = req.params;
+    if (!videoId) {
+      return res.json({
+        message: 'provide id',
+      });
+    }
+
+    const video = await VideoModel.findById(videoId)
+      .populate({
+        path: 'videoRanges',
+        model: 'VideoRange',
+      })
+      .exec();
+    const ranges = await VideoRangeModel.find({
+      video: videoId,
+    });
+
+    if (!video) {
+      return res.json({
+        message: 'video not found',
+      });
+    }
+    video.videoRanges = ranges;
+    res.json(video);
+  } catch (e: any) {
+    console.log(e);
+    res.status(500).json({ error: e.message || e.msg || 'Error' });
+  }
+});
+
+router.delete('/:id', jwtAuthMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = getUserFromRequest(req);
+
+    const video = await VideoModel.findById(id).populate('user');
+
+    if (!video) {
+      return res.status(404).json({ message: 'Video not found' });
+    }
+    if (video.user._id.toString() !== user._id.toString()) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    await VideoModel.findByIdAndDelete(id);
+    return res.status(200).json({ message: 'removed' });
+  } catch (e: any) {
+    console.log(e);
+    res.status(500).json({ error: e.message || e.msg || 'Error' });
+  }
+});
+
+// TODO:update from youtube recognize
+router.post(
+  '/recognize',
+  multerUpload.single('file'),
+  async (req: any, res) => {
+    try {
+      const folderPath = 'frames/videpl';
+      const files = await convertToFrames(
+        'videos/videoplayback.mp4',
+        folderPath,
+        150
+      );
+
+      const scheduler = createScheduler();
+      const worker = await createWorker({
+        logger: (arg: LoggerMessage) =>
+          logger.debug(`${arg.jobId}-${arg.progress}`),
+      });
+      await worker.loadLanguage('eng');
+      await worker.initialize('eng');
+      scheduler.addWorker(worker);
+
+      const results = await Promise.all(
+        files.map(async (path) => {
+          const rectangle = {
+            left: 0,
+            top: 0,
+            width: 200,
+            height: 200,
+          };
+          return scheduler.addJob('recognize', path, { rectangle });
+        })
+      );
+      await scheduler.terminate();
+
+      const textData = results
+        .map((data) => data.data.text.replaceAll('\n', ' '))
+        .filter((t) => t.length > 10);
+      res.json({
+        text: textData,
+      });
+    } catch (e: any) {
+      console.log(e);
+      res.status(500).json({ error: e.message || e.msg || 'Error' });
+    }
+  }
+);
+
+export default router;
