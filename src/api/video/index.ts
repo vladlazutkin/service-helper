@@ -8,10 +8,12 @@ import multerUpload from '../../middlewares/multer.middleware';
 import { convertToFrames } from '../../helpers/video';
 import { logger } from '../../logger';
 import youtube from './youtube';
+import tikTok from './tik-tok';
 
 const router = express.Router();
 
 router.use('/youtube', youtube);
+router.use('/tik-tok', tikTok);
 
 router.get('/', jwtAuthMiddleware, async (req, res) => {
   try {
@@ -34,8 +36,9 @@ router.get('/', jwtAuthMiddleware, async (req, res) => {
 
     return res.status(200).json(withRanges);
   } catch (e: any) {
-    console.log(e);
-    res.status(500).json({ error: e.message || e.msg || 'Error' });
+    const message = e.message || e.msg || 'Error';
+    logger.error(message);
+    res.status(500).json({ error: message });
   }
 });
 
@@ -43,7 +46,7 @@ router.get('/:id', jwtAuthMiddleware, async (req, res) => {
   try {
     const { id: videoId } = req.params;
     if (!videoId) {
-      return res.json({
+      return res.status(400).json({
         message: 'provide id',
       });
     }
@@ -59,15 +62,16 @@ router.get('/:id', jwtAuthMiddleware, async (req, res) => {
     });
 
     if (!video) {
-      return res.json({
+      return res.status(404).json({
         message: 'video not found',
       });
     }
     video.videoRanges = ranges;
     res.json(video);
   } catch (e: any) {
-    console.log(e);
-    res.status(500).json({ error: e.message || e.msg || 'Error' });
+    const message = e.message || e.msg || 'Error';
+    logger.error(message);
+    res.status(500).json({ error: message });
   }
 });
 
@@ -88,8 +92,9 @@ router.delete('/:id', jwtAuthMiddleware, async (req, res) => {
     await VideoModel.findByIdAndDelete(id);
     return res.status(200).json({ message: 'removed' });
   } catch (e: any) {
-    console.log(e);
-    res.status(500).json({ error: e.message || e.msg || 'Error' });
+    const message = e.message || e.msg || 'Error';
+    logger.error(message);
+    res.status(500).json({ error: message });
   }
 });
 
@@ -135,8 +140,9 @@ router.post(
         text: textData,
       });
     } catch (e: any) {
-      console.log(e);
-      res.status(500).json({ error: e.message || e.msg || 'Error' });
+      const message = e.message || e.msg || 'Error';
+      logger.error(message);
+      res.status(500).json({ error: message });
     }
   }
 );

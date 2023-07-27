@@ -8,7 +8,7 @@ export enum VideoRangeStatus {
   RECOGNIZED = 'recognized',
 }
 
-interface SpotifyTrack {
+export interface SpotifyTrack {
   id: string;
   name: string;
   imageUrl: string;

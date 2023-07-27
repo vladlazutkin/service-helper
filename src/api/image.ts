@@ -2,6 +2,8 @@ import fs from 'fs';
 import express from 'express';
 import { createWorker } from 'tesseract.js';
 import multerUpload from '../middlewares/multer.middleware';
+import { prepareDimensions } from '../helpers/video';
+import { logger } from '../logger';
 
 const router = express.Router();
 
@@ -19,7 +21,9 @@ router.post(
       const rectangle = JSON.parse(req.body.dimensions);
       const {
         data: { text },
-      } = await worker.recognize(path, { rectangle });
+      } = await worker.recognize(path, {
+        rectangle: prepareDimensions(rectangle),
+      });
       await worker.terminate();
 
       fs.unlinkSync(path);
@@ -28,8 +32,9 @@ router.post(
         text,
       });
     } catch (e: any) {
-      console.log(e);
-      res.status(500).json({ error: e.message || e.msg || 'Error' });
+      const message = e.message || e.msg || 'Error';
+      logger.error(message);
+      res.status(500).json({ error: message });
     }
   }
 );

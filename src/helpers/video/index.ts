@@ -1,6 +1,7 @@
 import ffmpeg from 'ffmpeg';
 import ffmpegF from 'fluent-ffmpeg';
 import fs from 'fs';
+import sharp from 'sharp';
 import { logger } from '../../logger';
 import { timemarkToSeconds } from '../shared/timemarkToSeconds';
 import { Dimensions } from '../../interfaces/Range';
@@ -25,6 +26,24 @@ export const getFilesFromFolder = async (
       );
     });
   });
+};
+
+export const preProcessFrames = async (path: string) => {
+  logger.debug(` Frames processing start`);
+  console.time(`preProcessFrames time`);
+
+  const files = await getFilesFromFolder(path);
+  await Promise.all(
+    files.map(async (file) => {
+      await sharp(file)
+        .threshold(128)
+        .toBuffer(async (err, buffer) => {
+          await fs.promises.writeFile(file, buffer);
+        });
+    })
+  );
+  logger.debug('Frames processed successfully');
+  console.timeEnd(`preProcessFrames time`);
 };
 
 export const convertToFrames = async (
@@ -60,7 +79,7 @@ export const downloadPartOfVideo = async (
       .setDuration(duration)
       .on('progress', ({ timemark }) => {
         const time = timemarkToSeconds(timemark);
-        const percent = (time / duration) * 100;
+        const percent = Math.round((time / duration) * 100);
 
         onProgress(percent);
       })

@@ -1,23 +1,21 @@
 import express from 'express';
-import { VideoRangeModel } from '../models/video-range';
+import { SpotifyTrack, VideoRangeModel } from '../models/video-range';
 import { chunkArray } from '../helpers/shared/chunkArray';
 import { getUserFromRequest } from '../helpers/shared/getUserFromRequest';
 import { withUpdateAccessToken } from '../helpers/spotify';
 import { logger } from '../logger';
-import authenticateJWT from '../middlewares/jwt.auth.middleware';
 import { createLoggedInSpotifyApi } from '../external-api/spotify';
-import throttle from '../helpers/shared/trottle';
 import { io } from '../socket';
 
 require('dotenv').config();
 
 const router = express.Router();
 
-router.post('/search', authenticateJWT, async (req: any, res) => {
+router.post('/search', async (req: any, res) => {
   try {
     const searchItems = req.body.search;
     const { rangeId, videoId } = req.body;
-    const result = [];
+    const result: SpotifyTrack[] = [];
 
     const user = getUserFromRequest(req);
     if (!user.spotifyAccessToken || !user.spotifyRefreshToken) {
@@ -50,6 +48,10 @@ router.post('/search', authenticateJWT, async (req: any, res) => {
         logger.debug(`No search result for search=${search}`);
         continue;
       }
+      if (result.find((t) => t.id === item.id)) {
+        logger.debug(`Item already in list, skipping`);
+        continue;
+      }
       const obj = {
         id: item.id,
         name: item.name,
@@ -61,29 +63,29 @@ router.post('/search', authenticateJWT, async (req: any, res) => {
       result.push(obj);
       logger.debug(`Search result for search=${search}: ${obj.externalUrl}`);
     }
-    const map = new Map(result.map((t) => [t.id, t]));
-    const uniques = [...map.values()];
+    // const map = new Map(result.map((t) => [t.id, t]));
+    // const uniques = [...map.values()];
 
     await VideoRangeModel.findOneAndUpdate(
-      { 'range.id': rangeId },
+      { 'range.id': rangeId, video: videoId },
       {
-        spotifyTracks: uniques,
+        spotifyTracks: result,
       }
     );
     io.emit(`spotify-search-progress-${videoId}-${rangeId}`, {
       progress: 100,
     });
 
-    res.json(uniques);
+    res.json(result);
   } catch (e: any) {
-    console.log(e);
-    res.status(500).json({ error: e.message || e.msg || 'Error' });
+    const message = e.message || e.msg || 'Error';
+    logger.error(message);
+    res.status(500).json({ error: message });
   }
 });
 
 router.post<{}, {}, { name: string; tracks: string[]; rangeId: string }>(
   '/create-playlist',
-  authenticateJWT,
   async (req, res) => {
     try {
       const name = req.body.name;
@@ -133,8 +135,9 @@ router.post<{}, {}, { name: string; tracks: string[]; rangeId: string }>(
         url: playlist.body.external_urls.spotify,
       });
     } catch (e: any) {
-      console.log(e);
-      res.status(500).json({ error: e.message || e.msg || 'Error' });
+      const message = e.message || e.msg || 'Error';
+      logger.error(message);
+      res.status(500).json({ error: message });
     }
   }
 );

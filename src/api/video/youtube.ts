@@ -13,10 +13,12 @@ import {
   downloadPartOfVideo,
   getFilesFromFolder,
   prepareDimensions,
+  preProcessFrames,
 } from '../../helpers/video';
 import { RangeMap } from '../../interfaces/Range';
 import { logger } from '../../logger';
 import { io } from '../../socket';
+import * as https from 'https';
 
 const router = express.Router();
 
@@ -39,8 +41,26 @@ router.post('/create-info', async (req, res) => {
       url,
     });
   } catch (e: any) {
-    console.log(e);
-    res.status(500).json({ error: e.message || e.msg || 'Error' });
+    const message = e.message || e.msg || 'Error';
+    logger.error(message);
+    res.status(500).json({ error: message });
+  }
+});
+
+router.post('/download', async (req, res) => {
+  try {
+    const { link } = req.body;
+
+    const data = await ytdl.getInfo(link);
+    const url = data.formats.find((f) => f.itag === 18)?.url!;
+
+    res.json({
+      url,
+    });
+  } catch (e: any) {
+    const message = e.message || e.msg || 'Error';
+    logger.error(message);
+    res.status(500).json({ error: message });
   }
 });
 
@@ -50,7 +70,7 @@ router.post<{}, {}, { id: string; data: RangeMap[]; language: string }>(
     try {
       const { id: videoId, data, language } = req.body;
       if (!videoId) {
-        return res.json({
+        return res.status(400).json({
           message: 'provide id',
         });
       }
@@ -58,7 +78,7 @@ router.post<{}, {}, { id: string; data: RangeMap[]; language: string }>(
       const video = await VideoModel.findById(videoId);
 
       if (!video) {
-        return res.json({
+        return res.status(404).json({
           message: 'video not found',
         });
       }
@@ -114,8 +134,8 @@ router.post<{}, {}, { id: string; data: RangeMap[]; language: string }>(
             status: VideoRangeStatus.VIDEO_DOWNLOADED,
           });
 
-          await convertToFrames(tempVideoPath, folderPath, 90);
-
+          await convertToFrames(tempVideoPath, folderPath, 60);
+          await preProcessFrames(folderPath);
           const files = await getFilesFromFolder(folderPath);
           const totalFrames = files.length;
           let frames = 0;
@@ -139,7 +159,7 @@ router.post<{}, {}, { id: string; data: RangeMap[]; language: string }>(
                     });
 
                     logger.debug(
-                      `Recognize progress: ${Math.round(
+                      `Recognize progress: ${frames}/${totalFrames} - ${Math.round(
                         (frames / totalFrames) * 100
                       )}%`
                     );
@@ -183,8 +203,9 @@ router.post<{}, {}, { id: string; data: RangeMap[]; language: string }>(
 
       res.json(response);
     } catch (e: any) {
-      console.log(e);
-      res.status(500).json({ error: e.message || e.msg || 'Error' });
+      const message = e.message || e.msg || 'Error';
+      logger.error(message);
+      res.status(500).json({ error: message });
     }
   }
 );
