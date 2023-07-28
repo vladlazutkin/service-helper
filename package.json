@@ -27,6 +27,7 @@
     "ffmpeg": "^0.0.4",
     "fluent-ffmpeg": "^2.1.2",
     "helmet": "^7.0.0",
+    "js-chess-engine": "^1.0.2",
     "jsonwebtoken": "^9.0.1",
     "mongoose": "^7.3.4",
     "morgan": "^1.10.0",
