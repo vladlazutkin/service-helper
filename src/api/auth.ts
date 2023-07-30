@@ -33,11 +33,17 @@ router.post('/login', async (req: any, res) => {
       return res.status(401).json({ message: 'Invalid Credentials' });
     }
 
-    bcrypt.compare(password, user.password, (err) => {
+    bcrypt.compare(password, user.password, (err, isSame) => {
       if (err) {
         logger.error(err.message);
         return res.status(401).json({ message: 'Invalid Credentials' });
       }
+
+      if (!isSame) {
+        logger.debug('wrong password');
+        return res.status(401).json({ message: 'Invalid Credentials' });
+      }
+
       const token = jwt.sign({ id: user?._id }, process.env.TOKEN_SECRET!, {
         expiresIn: '365d',
       });
@@ -60,7 +66,7 @@ router.post('/register', async (req: any, res) => {
     let userExists = await UserModel.findOne({ email });
 
     if (userExists) {
-      res.status(400).json({ message: 'Email is already in use.' });
+      res.status(401).json({ message: 'Email is already in use.' });
       return;
     }
 

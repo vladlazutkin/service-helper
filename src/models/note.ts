@@ -12,7 +12,7 @@ const noteSchema = new Schema({
   text: { type: String, required: true },
   user: { ref: 'User', type: Schema.Types.ObjectId },
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date },
+  updatedAt: { type: Date, default: Date.now },
 });
 
 noteSchema.pre('findOneAndUpdate', function (next) {

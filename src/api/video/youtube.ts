@@ -18,7 +18,6 @@ import {
 import { RangeMap } from '../../interfaces/Range';
 import { logger } from '../../logger';
 import { io } from '../../socket';
-import * as https from 'https';
 
 const router = express.Router();
 
@@ -36,10 +35,7 @@ router.post('/create-info', async (req, res) => {
       user: await UserModel.findById(user._id),
     });
 
-    res.json({
-      id: videoDb._id,
-      url,
-    });
+    res.json(videoDb);
   } catch (e: any) {
     const message = e.message || e.msg || 'Error';
     logger.error(message);

@@ -1,6 +1,7 @@
 import SpotifyWebApi from 'spotify-web-api-node';
 import { logger } from '../../logger';
 import { UserModel } from '../../models/user';
+import { createLoggedInSpotifyApi } from '../../external-api/spotify';
 
 const getRedirectUrl = () => {
   if (process.env.NODE_ENV === 'production') {
@@ -33,10 +34,21 @@ export const withUpdateAccessToken = async (
       const refreshData = await api.refreshAccessToken();
       const accessToken = refreshData.body.access_token;
       api.setAccessToken(accessToken);
-      await UserModel.findByIdAndUpdate(userId, {
-        spotifyAccessToken: accessToken,
-      });
-      await fn(api);
+      const updatedUser = await UserModel.findByIdAndUpdate(
+        userId,
+        {
+          spotifyAccessToken: accessToken,
+        },
+        { new: true }
+      );
+      if (!updatedUser) {
+        throw new Error('Error updating access token');
+      }
+      const updateApi = await createLoggedInSpotifyApi(
+        updatedUser.spotifyAccessToken!,
+        updatedUser.spotifyRefreshToken!
+      );
+      await fn(updateApi);
     } else {
       throw new Error(e);
     }

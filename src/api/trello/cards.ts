@@ -53,7 +53,7 @@ router.get('/:boardId', jwtAuthMiddleware, async (req, res) => {
 
 router.post('/', jwtAuthMiddleware, async (req, res) => {
   try {
-    const { boardId, content, columnId } = req.body;
+    const { boardId, title, columnId } = req.body;
     const user = getUserFromRequest(req);
 
     const board = await BoardModel.findById(boardId).populate([
@@ -81,7 +81,7 @@ router.post('/', jwtAuthMiddleware, async (req, res) => {
     }
 
     const card = await CardModel.create({
-      content,
+      title,
       position: 0,
       user: user._id,
       board: board._id,

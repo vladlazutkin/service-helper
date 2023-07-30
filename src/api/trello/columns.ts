@@ -123,6 +123,8 @@ router.delete('/:id', jwtAuthMiddleware, async (req, res) => {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
+    await CardModel.deleteMany({ column: column._id });
+
     await ColumnModel.findByIdAndDelete(id);
     return res.status(200).json({ message: 'removed' });
   } catch (e: any) {
