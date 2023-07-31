@@ -10,6 +10,8 @@ pids
 images
 videos
 frames
+profile
+!profile/.gitkeep
 !videos/.gitkeep
 !frames/.gitkeep
 !images/.gitkeep

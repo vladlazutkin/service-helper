@@ -12,6 +12,7 @@ require('dotenv').config();
 const app = express();
 
 app.use(morgan('dev'));
+app.use('/profile', express.static('profile'));
 app.use(helmet());
 app.use(cors());
 app.use(express.json());

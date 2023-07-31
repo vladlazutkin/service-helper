@@ -4,14 +4,16 @@ export interface User {
   _id: string;
   email: string;
   password: string;
+  profileIcon: string;
   spotifyAccessToken?: string;
   spotifyRefreshToken?: string;
 }
 
 const userSchema = new Schema({
   email: { type: String, required: true },
-  password: { type: String, required: true },
+  password: { type: String },
   spotifyAccessToken: { type: String },
+  profileIcon: { type: String },
   spotifyRefreshToken: { type: String },
   notes: [
     {

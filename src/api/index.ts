@@ -5,16 +5,17 @@ import spotify from './spotify';
 import videos from './video';
 import image from './image';
 import trello from './trello';
-import jwtAuthMiddleware from '../middlewares/jwt.auth.middleware';
+import users from './users';
 import authenticateJWT from '../middlewares/jwt.auth.middleware';
 
 const router = express.Router();
 
 router.use('/auth', auth);
 router.use('/spotify', authenticateJWT, spotify);
-router.use('/trello', jwtAuthMiddleware, trello);
-router.use('/note', jwtAuthMiddleware, notes);
-router.use('/video', jwtAuthMiddleware, videos);
-router.use('/image', jwtAuthMiddleware, image);
+router.use('/users', authenticateJWT, users);
+router.use('/trello', authenticateJWT, trello);
+router.use('/note', authenticateJWT, notes);
+router.use('/video', authenticateJWT, videos);
+router.use('/image', authenticateJWT, image);
 
 export default router;
