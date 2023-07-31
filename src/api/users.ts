@@ -135,6 +135,7 @@ router.post(
       await UserModel.findByIdAndUpdate(user._id, { profileIcon: path });
 
       return res.status(200).json({
+        profileIcon: path,
         message: 'Profile icon updated',
       });
     } catch (e: any) {

@@ -33,50 +33,76 @@ export const initChess = (io: Server, socket: Socket) => {
   let room: Room;
   let game: Game;
   let config: any;
+  let color: string;
 
-  socket.on('init-chess', () => {
+  const createRoom = (isAI: boolean) => {
     config = getConfig();
     game = new jsChessEngine.Game(config);
     const lastRoom = rooms[rooms.length - 1];
 
-    if (lastRoom && !lastRoom.black) {
+    if (lastRoom && !lastRoom.black && !lastRoom.isAI) {
       lastRoom.black = socket.id;
       room = lastRoom;
+      color = 'black';
       socket.emit('chess-connect', { color: FIGURE_COLOR.BLACK });
     } else {
-      const newRoom = { roomId: uuidv4(), white: socket.id, black: null, game };
+      const newRoom = {
+        roomId: uuidv4(),
+        white: socket.id,
+        black: null,
+        game,
+        isAI,
+      };
       rooms.push(newRoom);
       room = newRoom;
+      color = 'white';
       socket.emit('chess-connect', { color: FIGURE_COLOR.WHITE });
     }
 
     socket.join(room.roomId);
+  };
+
+  socket.on('init-chess-ai', () => {
+    createRoom(true);
+  });
+
+  socket.on('init-chess', () => {
+    createRoom(false);
   });
 
   socket.on('chess-move', (data) => {
     try {
-      const from = cellMap(data.from.i, data.from.j);
-      const to = cellMap(data.to.i, data.to.j);
+      const deep = data.deep ?? 0;
 
-      game.move(
-        `${from.letter.toUpperCase()}${from.num}`,
-        `${to.letter.toUpperCase()}${to.num}`
-      );
+      config.turn = color;
+
+      if (room.isAI) {
+        const from = cellMap(data.from.i, data.from.j);
+        const to = cellMap(data.to.i, data.to.j);
+
+        game.move(
+          `${from.letter.toUpperCase()}${from.num}`,
+          `${to.letter.toUpperCase()}${to.num}`
+        );
+      }
 
       io.to(room.roomId).emit('chess-move', data);
 
-      // No black player - AI
-      if (!room.black) {
-        setTimeout(() => {
-          const move = game.aiMove(0);
-          const [fromMove] = Object.keys(move);
-          const toMove = move[fromMove];
+      // AI
+      if (room.isAI) {
+        setTimeout(
+          () => {
+            const move = game.aiMove(deep ?? 0);
+            const [fromMove] = Object.keys(move);
+            const toMove = move[fromMove];
 
-          io.to(room.roomId).emit('chess-move', {
-            from: revertMap(fromMove),
-            to: revertMap(toMove),
-          });
-        }, 1500);
+            io.to(room.roomId).emit('chess-move', {
+              from: revertMap(fromMove),
+              to: revertMap(toMove),
+            });
+          },
+          deep < 3 ? 1500 : 0
+        );
       }
     } catch (e) {
       console.log(e);

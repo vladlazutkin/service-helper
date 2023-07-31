@@ -7,7 +7,8 @@ export interface Room {
   roomId: string;
   white: string;
   black: string | null;
-  game: Game;
+  game: Game | null;
+  isAI: boolean;
 }
 
 export interface Game {
