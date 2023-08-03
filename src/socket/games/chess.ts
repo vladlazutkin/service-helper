@@ -62,84 +62,12 @@ export const initChess = (io: Server, socket: Socket) => {
     socket.join(room.roomId);
   };
 
-  const createCheckersRoom = (isAI: boolean) => {
-    const lastRoom = rooms[rooms.length - 1];
-
-    if (lastRoom && !lastRoom.black && !lastRoom.isAI) {
-      lastRoom.black = socket.id;
-      room = lastRoom;
-      color = 'black';
-      socket.emit('checkers-connect', { color: FIGURE_COLOR.BLACK });
-    } else {
-      const newRoom = {
-        roomId: uuidv4(),
-        white: socket.id,
-        black: null,
-        game: null,
-        isAI,
-      };
-      rooms.push(newRoom);
-      room = newRoom;
-      color = 'white';
-      socket.emit('checkers-connect', { color: FIGURE_COLOR.WHITE });
-    }
-
-    socket.join(room.roomId);
-  };
-
   socket.on('init-chess-ai', () => {
     createRoom(true);
   });
 
   socket.on('init-chess', () => {
     createRoom(false);
-  });
-
-  socket.on('init-checkers-ai', () => {
-    createCheckersRoom(true);
-  });
-
-  socket.on('init-checkers', () => {
-    createCheckersRoom(false);
-  });
-
-  socket.on('checkers-move', (data) => {
-    try {
-      const deep = data.deep ?? 0;
-
-      // config.turn = color;
-
-      if (room.isAI) {
-        const from = cellMap(data.from.i, data.from.j);
-        const to = cellMap(data.to.i, data.to.j);
-
-        game.move(
-          `${from.letter.toUpperCase()}${from.num}`,
-          `${to.letter.toUpperCase()}${to.num}`
-        );
-      }
-
-      io.to(room.roomId).emit('checkers-move', data);
-
-      // AI
-      if (room.isAI) {
-        setTimeout(
-          () => {
-            const move = game.aiMove(deep ?? 0);
-            const [fromMove] = Object.keys(move);
-            const toMove = move[fromMove];
-
-            io.to(room.roomId).emit('checkers-move', {
-              from: revertMap(fromMove),
-              to: revertMap(toMove),
-            });
-          },
-          deep < 3 ? 1500 : 0
-        );
-      }
-    } catch (e) {
-      console.log(e);
-    }
   });
 
   socket.on('chess-move', (data) => {

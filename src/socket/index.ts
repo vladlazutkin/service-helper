@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import app from '../app';
 import { logger } from '../logger';
 import { initChess } from './games/chess';
+import { initCheckers } from './games/checkers';
 
 export const server = createServer(app);
 
@@ -19,6 +20,7 @@ export const io = new Server(server, {
 
 io.on('connection', (socket) => {
   initChess(io, socket);
+  initCheckers(io, socket);
 
   logger.info('Client connected');
 });

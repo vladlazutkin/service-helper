@@ -3,6 +3,16 @@ export enum FIGURE_COLOR {
   'BLACK' = 'BLACK',
 }
 
+export enum FIGURE_NAME {
+  'PAWN' = 'PAWN',
+  'BISHOP' = 'BISHOP',
+  'KNIGHT' = 'KNIGHT',
+  'ROOK' = 'ROOK',
+  'QUEEN' = 'QUEEN',
+  'KING' = 'KING',
+  'PIECE' = 'PIECE',
+}
+
 export interface Room {
   roomId: string;
   white: string;
