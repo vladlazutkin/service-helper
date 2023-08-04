@@ -2,7 +2,7 @@ import { Schema, model } from 'mongoose';
 import { User } from './user';
 import { Dimensions, Range } from '../interfaces/Range';
 
-export enum VideoRangeStatus {
+export enum VIDEO_RANGE_STATUS {
   RECOGNIZING = 'recognizing',
   VIDEO_DOWNLOADED = 'video-downloaded',
   RECOGNIZED = 'recognized',
@@ -32,8 +32,8 @@ export interface VideoRange {
 const videoRangeSchema = new Schema({
   status: {
     type: String,
-    enum: VideoRangeStatus,
-    default: VideoRangeStatus.RECOGNIZING,
+    enum: VIDEO_RANGE_STATUS,
+    default: VIDEO_RANGE_STATUS.RECOGNIZING,
   },
   video: { ref: 'Video', type: Schema.Types.ObjectId },
   result: [{ type: String, required: true }],

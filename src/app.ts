@@ -13,6 +13,7 @@ const app = express();
 
 app.use(morgan('dev'));
 app.use('/profile', express.static('profile'));
+app.use('/achievements', express.static('achievements'));
 app.use(helmet());
 app.use(cors());
 app.use(express.json());

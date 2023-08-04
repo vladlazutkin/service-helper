@@ -1,17 +1,36 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { UserModel } from '../models/user';
+import { User, UserModel } from '../models/user';
 import jwtAuthMiddleware from '../middlewares/jwt.auth.middleware';
 import { buildSpotifyCallbackUrl } from '../helpers/spotify';
 import { getUserFromRequest } from '../helpers/shared/getUserFromRequest';
 import { logger } from '../logger';
 import { spotifyApi } from '../external-api/spotify';
 import { OAuth2Client } from 'google-auth-library';
+import { AchievementModel } from '../models/achievement';
+import { achievementsBase } from '../const/achievements';
+import AchievementsHandler from '../handlers/achievements-handler';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const router = express.Router();
+
+const updateUserAchievements = async (user: User) => {
+  // await AchievementModel.deleteMany({ user: user._id });
+  const userAchievements = await AchievementModel.find({ user: user._id });
+  const toAdd = achievementsBase.filter(
+    (a) => !userAchievements.find((uA) => uA.toObject().event === a.event)
+  );
+  await Promise.all(
+    toAdd.map((a) =>
+      AchievementModel.create({
+        ...a,
+        user: user._id,
+      })
+    )
+  );
+};
 
 router.get('/login-spotify', jwtAuthMiddleware, async (req, res) => {
   try {
@@ -36,7 +55,7 @@ router.post('/login', async (req: any, res) => {
       return res.status(401).json({ message: 'Invalid Credentials' });
     }
 
-    bcrypt.compare(password, user.password, (err, isSame) => {
+    bcrypt.compare(password, user.password, async (err, isSame) => {
       if (err) {
         logger.error(err.message);
         return res.status(401).json({ message: 'Invalid Credentials' });
@@ -46,6 +65,9 @@ router.post('/login', async (req: any, res) => {
         logger.debug('wrong password');
         return res.status(401).json({ message: 'Invalid Credentials' });
       }
+
+      await updateUserAchievements(user);
+      await AchievementsHandler.onLogin(user._id);
 
       const token = jwt.sign({ id: user._id }, process.env.TOKEN_SECRET!, {
         expiresIn: '365d',
@@ -74,19 +96,20 @@ router.post('/register', async (req: any, res) => {
     }
 
     const saltRounds = 10;
-    bcrypt.hash(password, saltRounds, (err, hash) => {
+    bcrypt.hash(password, saltRounds, async (err, hash) => {
       if (err) {
         throw new Error('Internal Server Error');
       }
 
-      const user = new UserModel({
+      const user = await UserModel.create({
         email,
         password: hash,
       });
 
-      user.save().then(() => {
-        res.json({ message: 'User registered successfully' });
-      });
+      await updateUserAchievements(user);
+      await AchievementsHandler.onRegister(user._id);
+
+      res.json({ message: 'User registered successfully' });
     });
   } catch (e: any) {
     const message = e.message || e.msg || 'Error';
@@ -161,7 +184,11 @@ router.post('/google/login', async (req: any, res) => {
         email,
         profileIcon: picture,
       });
+      await AchievementsHandler.onRegister(user._id);
     }
+
+    await updateUserAchievements(user);
+    await AchievementsHandler.onLogin(user._id);
 
     const token = jwt.sign({ id: user._id }, process.env.TOKEN_SECRET!, {
       expiresIn: '365d',

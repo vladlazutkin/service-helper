@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { createScheduler, createWorker, RecognizeResult } from 'tesseract.js';
 import { VideoModel } from '../../models/video';
 import { UserModel } from '../../models/user';
-import { VideoRangeModel, VideoRangeStatus } from '../../models/video-range';
+import { VideoRangeModel, VIDEO_RANGE_STATUS } from '../../models/video-range';
 import { getUserFromRequest } from '../../helpers/shared/getUserFromRequest';
 import throttle from '../../helpers/shared/trottle';
 import {
@@ -127,7 +127,7 @@ router.post<{}, {}, { id: string; data: RangeMap[]; language: string }>(
 
           VideoRangeModel.findByIdAndUpdate(rangeDb._id, {
             progress: 50,
-            status: VideoRangeStatus.VIDEO_DOWNLOADED,
+            status: VIDEO_RANGE_STATUS.VIDEO_DOWNLOADED,
           });
 
           await convertToFrames(tempVideoPath, folderPath, 60);
@@ -178,7 +178,7 @@ router.post<{}, {}, { id: string; data: RangeMap[]; language: string }>(
           await VideoRangeModel.findByIdAndUpdate(rangeDb._id, {
             result: textData,
             progress: 100,
-            status: VideoRangeStatus.RECOGNIZED,
+            status: VIDEO_RANGE_STATUS.RECOGNIZED,
           });
 
           io.emit(`video-recognize-progress-${videoId}-${range.id}`, {

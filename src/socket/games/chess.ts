@@ -1,6 +1,8 @@
 import { Server, Socket } from 'socket.io';
 import { FIGURE_COLOR, Game, Room } from '../../interfaces/games/chess';
 import { v4 as uuidv4 } from 'uuid';
+import AchievementsHandler from '../../handlers/achievements-handler';
+import { CustomSocket } from '../../interfaces/CustomSocket';
 const jsChessEngine = require('js-chess-engine');
 
 let rooms: Room[] = [];
@@ -29,7 +31,7 @@ export const revertMap = (from: string) => {
   };
 };
 
-export const initChess = (io: Server, socket: Socket) => {
+export const initChess = (io: Server, socket: CustomSocket) => {
   let room: Room;
   let game: Game;
   let config: any;
@@ -73,6 +75,8 @@ export const initChess = (io: Server, socket: Socket) => {
   socket.on('chess-move', (data) => {
     try {
       const deep = data.deep ?? 0;
+
+      AchievementsHandler.onChessMove(socket.user._id);
 
       // config.turn = color;
 

@@ -7,11 +7,13 @@ import image from './image';
 import trello from './trello';
 import users from './users';
 import authenticateJWT from '../middlewares/jwt.auth.middleware';
+import achievements from './achievements';
 
 const router = express.Router();
 
 router.use('/auth', auth);
 router.use('/spotify', authenticateJWT, spotify);
+router.use('/achievements', authenticateJWT, achievements);
 router.use('/users', authenticateJWT, users);
 router.use('/trello', authenticateJWT, trello);
 router.use('/note', authenticateJWT, notes);

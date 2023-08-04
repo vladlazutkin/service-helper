@@ -5,6 +5,8 @@ import { CheckersRoom } from '../../interfaces/games/checkers';
 import { CheckersBoard } from '../../rules/checkers/classes/CheckersBoard';
 import { initCheckersBoard } from '../../rules/checkers';
 import { wait } from '../../helpers/shared/wait';
+import { CustomSocket } from '../../interfaces/CustomSocket';
+import AchievementsHandler from '../../handlers/achievements-handler';
 
 let rooms: CheckersRoom[] = [];
 
@@ -32,7 +34,7 @@ export const revertMap = (from: string) => {
   };
 };
 
-export const initCheckers = (io: Server, socket: Socket) => {
+export const initCheckers = (io: Server, socket: CustomSocket) => {
   let room: CheckersRoom;
   let board: CheckersBoard;
   let color: string;
@@ -78,6 +80,8 @@ export const initCheckers = (io: Server, socket: Socket) => {
       const prevColor = board.currentColor;
       const res = board.move(data.from, data.to);
       board.renderBoard();
+
+      AchievementsHandler.onCheckersMove(socket.user._id);
 
       io.to(room.roomId).emit('checkers-move', data);
 
