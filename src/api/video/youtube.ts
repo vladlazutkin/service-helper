@@ -116,7 +116,7 @@ router.post<{}, {}, { id: string; data: RangeMap[]; language: string }>(
 
               VideoRangeModel.findByIdAndUpdate(rangeDb._id, {
                 progress: Math.round(progress / 2),
-              });
+              }).exec();
               logger.debug(`Downloading progress: ${progress}%`);
             }
           );
@@ -128,7 +128,7 @@ router.post<{}, {}, { id: string; data: RangeMap[]; language: string }>(
           VideoRangeModel.findByIdAndUpdate(rangeDb._id, {
             progress: 50,
             status: VIDEO_RANGE_STATUS.VIDEO_DOWNLOADED,
-          });
+          }).exec();
 
           await convertToFrames(tempVideoPath, folderPath, 60);
           await preProcessFrames(folderPath);
@@ -152,7 +152,7 @@ router.post<{}, {}, { id: string; data: RangeMap[]; language: string }>(
                     });
                     VideoRangeModel.findByIdAndUpdate(rangeDb._id, {
                       progress,
-                    });
+                    }).exec();
 
                     logger.debug(
                       `Recognize progress: ${frames}/${totalFrames} - ${Math.round(

@@ -19,9 +19,13 @@ export interface Room {
   black: string | null;
   game: Game | null;
   isAI: boolean;
+  gameId?: string;
 }
 
 export interface Game {
   move: (from: string, to: string) => void;
   aiMove: (depth: number) => Record<string, string>;
+  exportFEN: () => string;
+  exportJson: () => Record<string, any>;
+  printToConsole: () => void;
 }

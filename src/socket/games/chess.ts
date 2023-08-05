@@ -1,8 +1,9 @@
-import { Server, Socket } from 'socket.io';
+import { Server } from 'socket.io';
 import { FIGURE_COLOR, Game, Room } from '../../interfaces/games/chess';
 import { v4 as uuidv4 } from 'uuid';
 import AchievementsHandler from '../../handlers/achievements-handler';
 import { CustomSocket } from '../../interfaces/CustomSocket';
+import { ChessGameModel } from '../../models/chess-game';
 const jsChessEngine = require('js-chess-engine');
 
 let rooms: Room[] = [];
@@ -37,48 +38,91 @@ export const initChess = (io: Server, socket: CustomSocket) => {
   let config: any;
   let color: string;
 
-  const createRoom = (isAI: boolean) => {
+  const createRoom = async (
+    isAI: boolean,
+    params: { initNewGame?: boolean; gameId?: string }
+  ) => {
     config = getConfig();
     game = new jsChessEngine.Game(config);
     const lastRoom = rooms[rooms.length - 1];
+    const { initNewGame = false, gameId } = params;
 
     if (lastRoom && !lastRoom.black && !lastRoom.isAI) {
       lastRoom.black = socket.id;
+      await ChessGameModel.findByIdAndUpdate(lastRoom.gameId, {
+        blackPlayer: socket.user._id,
+      });
       room = lastRoom;
       color = 'black';
       socket.emit('chess-connect', { color: FIGURE_COLOR.BLACK });
     } else {
-      const newRoom = {
-        roomId: uuidv4(),
-        white: socket.id,
-        black: null,
-        game,
-        isAI,
-      };
-      rooms.push(newRoom);
-      room = newRoom;
+      const prevGame = gameId
+        ? await ChessGameModel.findById(gameId)
+        : await ChessGameModel.findOne({
+            winner: { $exists: false },
+            playerWhite: socket.user._id,
+            isAI,
+          });
+
+      if (prevGame && !initNewGame) {
+        if (prevGame.state) {
+          game = new jsChessEngine.Game(JSON.parse(prevGame.state));
+        }
+        const newRoom: Room = {
+          roomId: uuidv4(),
+          white: socket.id,
+          black: null,
+          game,
+          isAI,
+          gameId: prevGame._id,
+        };
+        await ChessGameModel.findByIdAndUpdate(prevGame._id, {
+          roomId: newRoom.roomId,
+        });
+        rooms.push(newRoom);
+        room = newRoom;
+      } else {
+        const newRoom: Room = {
+          roomId: uuidv4(),
+          white: socket.id,
+          black: null,
+          game,
+          isAI,
+        };
+        const chessGame = await ChessGameModel.create({
+          playerWhite: socket.user._id,
+          isAI,
+          roomId: newRoom.roomId,
+        });
+        newRoom.gameId = chessGame._id;
+        rooms.push(newRoom);
+        room = newRoom;
+      }
+
       color = 'white';
-      socket.emit('chess-connect', { color: FIGURE_COLOR.WHITE });
+      socket.emit('chess-connect', {
+        color: FIGURE_COLOR.WHITE,
+        pieces: game.exportJson().pieces,
+      });
     }
 
     socket.join(room.roomId);
   };
 
-  socket.on('init-chess-ai', () => {
-    createRoom(true);
+  socket.on('init-chess-ai', (data) => {
+    createRoom(true, data);
   });
 
-  socket.on('init-chess', () => {
-    createRoom(false);
+  socket.on('init-chess', (data) => {
+    createRoom(false, data);
   });
 
   socket.on('chess-move', (data) => {
     try {
+      game.printToConsole();
       const deep = data.deep ?? 0;
 
       AchievementsHandler.onChessMove(socket.user._id);
-
-      // config.turn = color;
 
       if (room.isAI) {
         const from = cellMap(data.from.i, data.from.j);
@@ -88,6 +132,10 @@ export const initChess = (io: Server, socket: CustomSocket) => {
           `${from.letter.toUpperCase()}${from.num}`,
           `${to.letter.toUpperCase()}${to.num}`
         );
+
+        ChessGameModel.findByIdAndUpdate(room.gameId, {
+          state: JSON.stringify(game.exportJson()),
+        }).exec();
       }
 
       io.to(room.roomId).emit('chess-move', data);
@@ -95,8 +143,13 @@ export const initChess = (io: Server, socket: CustomSocket) => {
       // AI
       if (room.isAI) {
         setTimeout(
-          () => {
+          async () => {
             const move = game.aiMove(deep ?? 0);
+
+            ChessGameModel.findByIdAndUpdate(room.gameId, {
+              state: JSON.stringify(game.exportJson()),
+            }).exec();
+
             const [fromMove] = Object.keys(move);
             const toMove = move[fromMove];
 
@@ -119,24 +172,24 @@ export const initChess = (io: Server, socket: CustomSocket) => {
       console.log('no room');
       return;
     }
-    if (room.white === socket.id) {
-      if (room.black) {
-        console.log('disconnect black');
-        const socketBlack = io.sockets.sockets.get(room.black);
-        if (socketBlack) {
-          socketBlack.disconnect();
-        }
-      }
-    } else {
-      if (room.white) {
-        console.log('disconnect white');
-        const socketWhite = io.sockets.sockets.get(room.white);
-        if (socketWhite) {
-          socketWhite.disconnect();
-        }
-      }
-    }
-    rooms = rooms.filter((r) => r.roomId !== room.roomId);
+    // if (room.white === socket.id) {
+    //   if (room.black) {
+    //     console.log('disconnect black');
+    //     const socketBlack = io.sockets.sockets.get(room.black);
+    //     if (socketBlack) {
+    //       socketBlack.disconnect();
+    //     }
+    //   }
+    // } else {
+    //   if (room.white) {
+    //     console.log('disconnect white');
+    //     const socketWhite = io.sockets.sockets.get(room.white);
+    //     if (socketWhite) {
+    //       socketWhite.disconnect();
+    //     }
+    //   }
+    // }
+    // rooms = rooms.filter((r) => r.roomId !== room.roomId);
   });
 };
 
