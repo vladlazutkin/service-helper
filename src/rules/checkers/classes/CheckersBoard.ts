@@ -3,13 +3,33 @@ import { CheckersCell } from './Cell';
 import { CheckersFigure } from './CheckersFigure';
 import { getRandomInt } from '../../../helpers/shared/getRandomInt';
 
+export enum EVENT_TYPE {
+  BECOME_QUEEN = 'BECOME_QUEEN',
+}
+
+interface Event {
+  type: EVENT_TYPE;
+  data?: Record<string, any>;
+}
+
 export class CheckersBoard {
   private cells: CheckersCell[][] = [];
   currentColor: FIGURE_COLOR;
   beatenFigures: CheckersFigure[] = [];
+  private cbs: ((event: Event) => void)[] = [];
 
   constructor() {
     this.currentColor = FIGURE_COLOR.WHITE;
+  }
+
+  onBecomeQueen(color: FIGURE_COLOR) {
+    this.cbs.forEach((cb) =>
+      cb({ type: EVENT_TYPE.BECOME_QUEEN, data: { color } })
+    );
+  }
+
+  onUpdate(cb: (event: Event) => void) {
+    this.cbs.push(cb);
   }
 
   aiMove() {

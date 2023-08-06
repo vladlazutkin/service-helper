@@ -1,38 +1,17 @@
-import { Server, Socket } from 'socket.io';
+import { Server } from 'socket.io';
 import { FIGURE_COLOR } from '../../interfaces/games/chess';
 import { v4 as uuidv4 } from 'uuid';
 import { CheckersRoom } from '../../interfaces/games/checkers';
-import { CheckersBoard } from '../../rules/checkers/classes/CheckersBoard';
+import {
+  CheckersBoard,
+  EVENT_TYPE,
+} from '../../rules/checkers/classes/CheckersBoard';
 import { initCheckersBoard } from '../../rules/checkers';
 import { wait } from '../../helpers/shared/wait';
 import { CustomSocket } from '../../interfaces/CustomSocket';
 import AchievementsHandler from '../../handlers/achievements-handler';
 
 let rooms: CheckersRoom[] = [];
-
-const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-
-export const cellMap = (i: number, j: number) => {
-  const num = 8 - i;
-  const letter = letters[j].toUpperCase();
-
-  return {
-    num,
-    letter,
-  };
-};
-
-export const revertMap = (from: string) => {
-  const [letterFrom, numFrom] = from;
-
-  const i = 8 - +numFrom;
-  const j = letters.indexOf(letterFrom.toLowerCase());
-
-  return {
-    i,
-    j,
-  };
-};
 
 export const initCheckers = (io: Server, socket: CustomSocket) => {
   let room: CheckersRoom;
@@ -46,8 +25,7 @@ export const initCheckers = (io: Server, socket: CustomSocket) => {
       lastRoom.black = socket.id;
       room = lastRoom;
       board = lastRoom.board!;
-      color = 'black';
-      socket.emit('checkers-connect', { color: FIGURE_COLOR.BLACK });
+      color = FIGURE_COLOR.BLACK;
     } else {
       board = initCheckersBoard();
       const newRoom = {
@@ -60,10 +38,20 @@ export const initCheckers = (io: Server, socket: CustomSocket) => {
       board.renderBoard();
       rooms.push(newRoom);
       room = newRoom;
-      color = 'white';
-      socket.emit('checkers-connect', { color: FIGURE_COLOR.WHITE });
+      color = FIGURE_COLOR.WHITE;
     }
 
+    socket.emit('checkers-connect', { color });
+
+    board.onUpdate((event) => {
+      console.log(event);
+      if (
+        event.type === EVENT_TYPE.BECOME_QUEEN &&
+        event.data?.color === color
+      ) {
+        AchievementsHandler.onCheckersQueen(socket.user._id);
+      }
+    });
     socket.join(room.roomId);
   };
 

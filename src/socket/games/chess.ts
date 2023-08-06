@@ -4,33 +4,10 @@ import { v4 as uuidv4 } from 'uuid';
 import AchievementsHandler from '../../handlers/achievements-handler';
 import { CustomSocket } from '../../interfaces/CustomSocket';
 import { ChessGameModel } from '../../models/chess-game';
+import { cellMap, revertMap } from '../../helpers/games/chess';
 const jsChessEngine = require('js-chess-engine');
 
 let rooms: Room[] = [];
-
-const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-
-export const cellMap = (i: number, j: number) => {
-  const num = 8 - i;
-  const letter = letters[j].toUpperCase();
-
-  return {
-    num,
-    letter,
-  };
-};
-
-export const revertMap = (from: string) => {
-  const [letterFrom, numFrom] = from;
-
-  const i = 8 - +numFrom;
-  const j = letters.indexOf(letterFrom.toLowerCase());
-
-  return {
-    i,
-    j,
-  };
-};
 
 export const initChess = (io: Server, socket: CustomSocket) => {
   let room: Room;
@@ -54,7 +31,10 @@ export const initChess = (io: Server, socket: CustomSocket) => {
       });
       room = lastRoom;
       color = 'black';
-      socket.emit('chess-connect', { color: FIGURE_COLOR.BLACK });
+      socket.emit('chess-connect', {
+        color: FIGURE_COLOR.BLACK,
+        pieces: config.pieces,
+      });
     } else {
       const prevGame = gameId
         ? await ChessGameModel.findById(gameId)
@@ -133,6 +113,10 @@ export const initChess = (io: Server, socket: CustomSocket) => {
           `${to.letter.toUpperCase()}${to.num}`
         );
 
+        if (game.exportJson().check) {
+          AchievementsHandler.onChessCheckMade(socket.user._id);
+        }
+
         ChessGameModel.findByIdAndUpdate(room.gameId, {
           state: JSON.stringify(game.exportJson()),
         }).exec();
@@ -145,6 +129,9 @@ export const initChess = (io: Server, socket: CustomSocket) => {
         setTimeout(
           async () => {
             const move = game.aiMove(deep ?? 0);
+            if (game.exportJson().check) {
+              AchievementsHandler.onYourChessCheck(socket.user._id);
+            }
 
             ChessGameModel.findByIdAndUpdate(room.gameId, {
               state: JSON.stringify(game.exportJson()),
@@ -175,7 +162,7 @@ export const initChess = (io: Server, socket: CustomSocket) => {
     // if (room.white === socket.id) {
     //   if (room.black) {
     //     console.log('disconnect black');
-    //     const socketBlack = io.sockets.sockets.get(room.black);
+    //     constants socketBlack = io.sockets.sockets.get(room.black);
     //     if (socketBlack) {
     //       socketBlack.disconnect();
     //     }
@@ -183,7 +170,7 @@ export const initChess = (io: Server, socket: CustomSocket) => {
     // } else {
     //   if (room.white) {
     //     console.log('disconnect white');
-    //     const socketWhite = io.sockets.sockets.get(room.white);
+    //     constants socketWhite = io.sockets.sockets.get(room.white);
     //     if (socketWhite) {
     //       socketWhite.disconnect();
     //     }

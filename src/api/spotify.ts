@@ -63,8 +63,8 @@ router.post('/search', async (req: any, res) => {
       result.push(obj);
       logger.debug(`Search result for search=${search}: ${obj.externalUrl}`);
     }
-    // const map = new Map(result.map((t) => [t.id, t]));
-    // const uniques = [...map.values()];
+    // constants map = new Map(result.map((t) => [t.id, t]));
+    // constants uniques = [...map.values()];
 
     await VideoRangeModel.findOneAndUpdate(
       { 'range.id': rangeId, video: videoId },

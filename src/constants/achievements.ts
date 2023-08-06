@@ -3,6 +3,22 @@ import { ACHIEVEMENT_EVENT } from '../interfaces/achievements';
 
 export const achievementsBase: Omit<Achievement, '_id' | 'user'>[] = [
   {
+    title: 'Chess checker',
+    total: 100,
+    current: 0,
+    description: 'Make 100 chess check',
+    avatar: 'achievements/chess-player.png',
+    event: ACHIEVEMENT_EVENT.CHESS_CHECK,
+  },
+  {
+    title: 'Under attack',
+    total: 100,
+    current: 0,
+    description: 'Get chess check 100 times',
+    avatar: 'achievements/chess-player.png',
+    event: ACHIEVEMENT_EVENT.YOUR_CHESS_CHECK,
+  },
+  {
     title: 'Chess mover',
     total: 100,
     current: 0,
@@ -33,6 +49,14 @@ export const achievementsBase: Omit<Achievement, '_id' | 'user'>[] = [
     description: 'Lose 10 chess games',
     avatar: 'achievements/chess-loser.png',
     event: ACHIEVEMENT_EVENT.LOSE_CHESS_GAME,
+  },
+  {
+    title: 'Checkers queen',
+    total: 100,
+    current: 0,
+    description: 'Become a queen in checkers 100 times',
+    avatar: 'achievements/checkers-player.png',
+    event: ACHIEVEMENT_EVENT.CHECKERS_QUEEN,
   },
   {
     title: 'Checkers mover',

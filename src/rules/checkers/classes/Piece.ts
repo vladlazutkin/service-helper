@@ -92,6 +92,7 @@ export class Piece extends CheckersFigure {
   checkQueen() {
     if (this.pieceIsQueen() && !this.isQueen) {
       this.isQueen = true;
+      this.board.onBecomeQueen(this.color);
     }
   }
 
@@ -116,7 +117,7 @@ export class Piece extends CheckersFigure {
     cell.figure = this;
     this.currentCell = cell;
 
-    // const { whiteWin, blackWin } = this.board.checkForWin();
+    // constants { whiteWin, blackWin } = this.board.checkForWin();
     // if (whiteWin) {
     //   alert('White win');
     // }
