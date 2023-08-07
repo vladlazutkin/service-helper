@@ -9,11 +9,17 @@ import users from './users';
 import authenticateJWT from '../middlewares/jwt.auth.middleware';
 import achievements from './achievements';
 import chessGames from './chess-games';
+import chessSkins from './chess-skins';
+import chessConfigs from './chess-configs';
+import stripe from './stripe';
 
 const router = express.Router();
 
 router.use('/auth', auth);
+router.use('/stripe', stripe);
 router.use('/spotify', authenticateJWT, spotify);
+router.use('/chess-skins', authenticateJWT, chessSkins);
+router.use('/chess-configs', authenticateJWT, chessConfigs);
 router.use('/achievements', authenticateJWT, achievements);
 router.use('/chess-games', authenticateJWT, chessGames);
 router.use('/users', authenticateJWT, users);

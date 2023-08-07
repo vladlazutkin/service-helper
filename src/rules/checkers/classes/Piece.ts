@@ -2,6 +2,7 @@ import { FIGURE_COLOR, FIGURE_NAME } from '../../../interfaces/games/chess';
 import { CheckersBoard } from './CheckersBoard';
 import { CheckersFigure } from './CheckersFigure';
 import { CheckersCell } from './Cell';
+import { assertCannotReach } from '../../../helpers/shared/assertCannotReach';
 
 export class Piece extends CheckersFigure {
   isQueen = false;

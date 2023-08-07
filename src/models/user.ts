@@ -1,4 +1,6 @@
 import { Schema, model } from 'mongoose';
+import { ChessConfig } from './chess-config';
+import { ChessSkin } from './chess-skin';
 
 export interface User {
   _id: string;
@@ -7,6 +9,8 @@ export interface User {
   profileIcon: string;
   spotifyAccessToken?: string;
   spotifyRefreshToken?: string;
+  chessConfig?: ChessConfig;
+  chessSkins?: ChessSkin[];
 }
 
 const userSchema = new Schema({
@@ -21,6 +25,16 @@ const userSchema = new Schema({
       type: Schema.Types.ObjectId,
     },
   ],
+  chessSkins: [
+    {
+      ref: 'ChessSkin',
+      type: Schema.Types.ObjectId,
+    },
+  ],
+  chessConfig: {
+    ref: 'ChessConfig',
+    type: Schema.Types.ObjectId,
+  },
 });
 
 export const UserModel = model<User>('User', userSchema);

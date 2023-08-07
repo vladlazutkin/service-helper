@@ -12,6 +12,7 @@ import { AchievementModel } from '../models/achievement';
 import { achievementsBase } from '../constants/achievements';
 import AchievementsHandler from '../handlers/achievements-handler';
 import { logger } from '../logger';
+import { ChessConfigModel } from '../models/chess-config';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -31,6 +32,30 @@ const updateUserAchievements = async (user: User) => {
       })
     )
   );
+};
+
+const updateUserChessConfig = async (user: User) => {
+  const userA = await UserModel.findById(user._id).populate('chessSkins');
+  if (userA) {
+    userA.chessSkins = [];
+    await userA.save();
+  }
+
+  const chessConfig = await ChessConfigModel.findOne({
+    user: user._id,
+  });
+  if (!chessConfig) {
+    await ChessConfigModel.create({
+      user: user._id,
+    });
+  }
+};
+
+const updateUserData = async (user: User) => {
+  await Promise.all([
+    updateUserAchievements(user),
+    updateUserChessConfig(user),
+  ]);
 };
 
 router.get('/login-spotify', jwtAuthMiddleware, async (req, res) => {
@@ -70,7 +95,7 @@ router.post(
           return res.status(401).json({ message: 'Invalid Credentials' });
         }
 
-        await updateUserAchievements(user);
+        await updateUserData(user);
         await AchievementsHandler.onLogin(user._id);
 
         const token = jwt.sign({ id: user._id }, process.env.TOKEN_SECRET!, {
@@ -198,7 +223,7 @@ router.post('/google/login', async (req: any, res) => {
       await AchievementsHandler.onRegister(user._id);
     }
 
-    await updateUserAchievements(user);
+    await updateUserData(user);
     await AchievementsHandler.onLogin(user._id);
 
     const token = jwt.sign({ id: user._id }, process.env.TOKEN_SECRET!, {
