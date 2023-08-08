@@ -14,7 +14,7 @@ router.post('/download', async (req, res) => {
       }
     );
 
-    res.json(data.video);
+    res.json(data);
   } catch (e: any) {
     const message = e.message || e.msg || 'Error';
     logger.error(message);

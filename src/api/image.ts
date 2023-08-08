@@ -1,11 +1,23 @@
 import fs from 'fs';
 import express from 'express';
+import axios from 'axios';
 import { createWorker } from 'tesseract.js';
 import multerUpload from '../middlewares/multer.middleware';
 import { prepareDimensions } from '../helpers/video';
 import { logger } from '../logger';
 
 const router = express.Router();
+
+router.get('/search', async (req, res) => {
+  // const { per_page, query,page } = req.query;
+  const { data } = await axios.get(
+    `https://unsplash.com/napi/search/photos?query=${new URLSearchParams(
+      req.query as Record<string, string>
+    ).toString()}`
+  );
+
+  return res.status(200).json(data);
+});
 
 router.post(
   '/recognize',
