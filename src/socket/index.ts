@@ -16,6 +16,7 @@ export const io = new Server(server, {
     origin: [
       'http://localhost:3000',
       'https://service-helper-client.vercel.app',
+      'https://shelp.vercel.app',
     ],
     methods: ['GET', 'POST'],
     credentials: true,
