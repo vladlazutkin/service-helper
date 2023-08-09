@@ -20,6 +20,7 @@ export interface Room {
   game: Game | null;
   isAI: boolean;
   gameId?: string;
+  checkMate?: boolean;
 }
 
 export interface Game {

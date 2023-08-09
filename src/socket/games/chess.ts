@@ -83,6 +83,8 @@ export const initChess = (io: Server, socket: CustomSocket) => {
       socket.emit('chess-connect', {
         color: FIGURE_COLOR.WHITE,
         pieces: game.exportJson().pieces,
+        checkMate: game.exportJson().checkMate,
+        gameId: room.gameId,
       });
     }
 
@@ -99,6 +101,9 @@ export const initChess = (io: Server, socket: CustomSocket) => {
 
   socket.on('chess-move', (data) => {
     try {
+      if (room.checkMate) {
+        return;
+      }
       game.printToConsole();
       const deep = data.deep ?? 0;
 
@@ -124,6 +129,17 @@ export const initChess = (io: Server, socket: CustomSocket) => {
 
       io.to(room.roomId).emit('chess-move', data);
 
+      if (game.exportJson().checkMate) {
+        room.checkMate = true;
+        ChessGameModel.findByIdAndUpdate(room.gameId, {
+          state: JSON.stringify(game.exportJson()),
+          winner: FIGURE_COLOR.WHITE,
+        }).exec();
+        return io
+          .to(room.roomId)
+          .emit('checkmate', { winner: FIGURE_COLOR.WHITE });
+      }
+
       // AI
       if (room.isAI) {
         setTimeout(
@@ -144,6 +160,16 @@ export const initChess = (io: Server, socket: CustomSocket) => {
               from: revertMap(fromMove),
               to: revertMap(toMove),
             });
+            if (game.exportJson().checkMate) {
+              room.checkMate = true;
+              ChessGameModel.findByIdAndUpdate(room.gameId, {
+                state: JSON.stringify(game.exportJson()),
+                winner: FIGURE_COLOR.WHITE,
+              }).exec();
+              return io
+                .to(room.roomId)
+                .emit('checkmate', { winner: FIGURE_COLOR.BLACK });
+            }
           },
           deep < 3 ? 1500 : 0
         );
