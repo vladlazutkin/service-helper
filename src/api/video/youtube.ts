@@ -43,6 +43,23 @@ router.post('/create-info', async (req, res) => {
   }
 });
 
+router.post('/download-audio', async (req, res) => {
+  try {
+    const { link } = req.body;
+
+    const data = await ytdl.getInfo(link);
+    const audioFormats = ytdl.filterFormats(data.formats, 'audioonly');
+
+    res.json({
+      url: audioFormats[0].url,
+    });
+  } catch (e: any) {
+    const message = e.message || e.msg || 'Error';
+    logger.error(message);
+    res.status(500).json({ error: message });
+  }
+});
+
 router.post('/download', async (req, res) => {
   try {
     const { link } = req.body;
