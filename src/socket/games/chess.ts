@@ -164,7 +164,7 @@ export const initChess = (io: Server, socket: CustomSocket) => {
               room.checkMate = true;
               ChessGameModel.findByIdAndUpdate(room.gameId, {
                 state: JSON.stringify(game.exportJson()),
-                winner: FIGURE_COLOR.WHITE,
+                winner: FIGURE_COLOR.BLACK,
               }).exec();
               return io
                 .to(room.roomId)

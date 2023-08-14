@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { createScheduler, createWorker, RecognizeResult } from 'tesseract.js';
 import { VideoModel } from '../../models/video';
 import { UserModel } from '../../models/user';
-import { VideoRangeModel, VIDEO_RANGE_STATUS } from '../../models/video-range';
+import { VIDEO_RANGE_STATUS, VideoRangeModel } from '../../models/video-range';
 import { getUserFromRequest } from '../../helpers/shared/getUserFromRequest';
 import throttle from '../../helpers/shared/trottle';
 import {
@@ -18,6 +18,15 @@ import {
 import { RangeMap } from '../../interfaces/Range';
 import { logger } from '../../logger';
 import { io } from '../../socket';
+import * as https from 'https';
+import axios from 'axios';
+
+const { google } = require('googleapis');
+
+const youtube = google.youtube({
+  version: 'v3',
+  auth: process.env.GOOGLE_API_KEY,
+});
 
 const router = express.Router();
 
@@ -36,6 +45,37 @@ router.post('/create-info', async (req, res) => {
     });
 
     res.json(videoDb);
+  } catch (e: any) {
+    const message = e.message || e.msg || 'Error';
+    logger.error(message);
+    res.status(500).json({ error: message });
+  }
+});
+
+router.post('/download-videos-from-playlist', async (req, res) => {
+  try {
+    const { playlistId, audioOnly } = req.body;
+
+    const { data } = await youtube.playlistItems.list({
+      part: 'contentDetails,snippet',
+      playlistId: playlistId,
+      maxResults: 50,
+    });
+    const urls = await Promise.all(
+      data.items.map(async (item: any) => {
+        const { videoId } = item.contentDetails;
+        const data = await ytdl.getInfo(videoId);
+        if (audioOnly) {
+          const audioFormats = ytdl.filterFormats(data.formats, 'audioonly');
+          return audioFormats[0].url;
+        }
+        return data.formats.find((f) => f.itag === 18)?.url!;
+      })
+    );
+
+    res.json({
+      urls,
+    });
   } catch (e: any) {
     const message = e.message || e.msg || 'Error';
     logger.error(message);

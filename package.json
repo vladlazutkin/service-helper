@@ -28,6 +28,7 @@
     "ffmpeg": "^0.0.4",
     "fluent-ffmpeg": "^2.1.2",
     "google-auth-library": "^9.0.0",
+    "googleapis": "^124.0.0",
     "helmet": "^7.0.0",
     "js-chess-engine": "^1.0.2",
     "jsonwebtoken": "^9.0.1",
