@@ -3,7 +3,7 @@ import { FIGURE_COLOR, Game, Room } from '../../interfaces/games/chess';
 import { v4 as uuidv4 } from 'uuid';
 import AchievementsHandler from '../../handlers/achievements-handler';
 import { CustomSocket } from '../../interfaces/CustomSocket';
-import { ChessGameModel } from '../../models/chess-game';
+import { ChessGameModel } from '../../models/games/chess-game';
 import { cellMap, revertMap } from '../../helpers/games/chess';
 const jsChessEngine = require('js-chess-engine');
 

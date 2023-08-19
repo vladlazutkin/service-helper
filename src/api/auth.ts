@@ -12,7 +12,7 @@ import { AchievementModel } from '../models/achievement';
 import { achievementsBase } from '../constants/achievements';
 import AchievementsHandler from '../handlers/achievements-handler';
 import { logger } from '../logger';
-import { ChessConfigModel } from '../models/chess-config';
+import { ChessConfigModel } from '../models/games/chess-config';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 

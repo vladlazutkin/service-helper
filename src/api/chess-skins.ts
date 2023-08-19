@@ -1,7 +1,7 @@
 import express from 'express';
 import Stripe from 'stripe';
 import { logger } from '../logger';
-import { ChessSkinModel } from '../models/chess-skin';
+import { ChessSkinModel } from '../models/games/chess-skin';
 import { getStripeCallbackUrl } from '../helpers/stripe';
 import {
   TRANSACTION_STATUS,

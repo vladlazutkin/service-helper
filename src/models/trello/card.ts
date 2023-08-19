@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { Board } from './board';
-import { User } from './user';
+import { User } from '../user';
 import { Column } from './column';
 import { Label } from './label';
 
@@ -13,6 +13,7 @@ export interface Card {
     x: number;
     y: number;
   };
+  to: string[];
   board: Board;
   user: User;
   column: Column;
@@ -21,6 +22,7 @@ export interface Card {
 
 const cardSchema = new Schema({
   title: { type: String, required: true },
+  to: [{ type: String }],
   description: { type: String },
   position: { type: Number, default: 0 },
   coordinates: {

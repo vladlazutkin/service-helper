@@ -1,4 +1,4 @@
-import { ChessSkin } from '../models/chess-skin';
+import { ChessSkin } from '../models/games/chess-skin';
 
 enum FIGURE {
   WHITE_PAWN = 'P',

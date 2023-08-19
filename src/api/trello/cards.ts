@@ -2,10 +2,10 @@ import express from 'express';
 import jwtAuthMiddleware from '../../middlewares/jwt.auth.middleware';
 import { getUserFromRequest } from '../../helpers/shared/getUserFromRequest';
 import { logger } from '../../logger';
-import { CardModel } from '../../models/card';
-import { BoardModel } from '../../models/board';
-import { ColumnModel } from '../../models/column';
-import { LabelModel } from '../../models/label';
+import { CardModel } from '../../models/trello/card';
+import { BoardModel } from '../../models/trello/board';
+import { ColumnModel } from '../../models/trello/column';
+import { LabelModel } from '../../models/trello/label';
 
 const router = express.Router();
 
@@ -98,7 +98,7 @@ router.post('/', jwtAuthMiddleware, async (req, res) => {
 router.patch('/:id', jwtAuthMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const { columnId, position, coordinates, title, description, labels } =
+    const { columnId, position, coordinates, title, description, labels, to } =
       req.body;
     const user = getUserFromRequest(req);
 
@@ -141,6 +141,9 @@ router.patch('/:id', jwtAuthMiddleware, async (req, res) => {
       toUpdate.labels = await Promise.all(
         labels.map((data: { _id: string }) => LabelModel.findById(data._id))
       );
+    }
+    if (to !== undefined) {
+      toUpdate.to = to;
     }
 
     const updated = await CardModel.findByIdAndUpdate(id, toUpdate, {

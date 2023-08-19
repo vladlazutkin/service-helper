@@ -1,9 +1,9 @@
 import express from 'express';
 import jwtAuthMiddleware from '../../middlewares/jwt.auth.middleware';
 import { getUserFromRequest } from '../../helpers/shared/getUserFromRequest';
+import { CardModel } from '../../models/trello/card';
+import { CommentModel } from '../../models/trello/comment';
 import { logger } from '../../logger';
-import { BoardModel } from '../../models/trello/board';
-import { LabelModel } from '../../models/trello/label';
 
 const router = express.Router();
 
@@ -11,8 +11,8 @@ router.get('/', jwtAuthMiddleware, async (req, res) => {
   try {
     const user = getUserFromRequest(req);
 
-    const labels = await LabelModel.find({ user: user._id });
-    return res.status(200).json(labels);
+    const comments = await CommentModel.find({ user: user._id });
+    return res.status(200).json(comments);
   } catch (e: any) {
     const message = e.message || e.msg || 'Error';
     logger.error(message);
@@ -20,24 +20,24 @@ router.get('/', jwtAuthMiddleware, async (req, res) => {
   }
 });
 
-router.get('/:boardId', jwtAuthMiddleware, async (req, res) => {
+router.get('/:cardId', jwtAuthMiddleware, async (req, res) => {
   try {
-    const { boardId } = req.params;
+    const { cardId } = req.params;
     const user = getUserFromRequest(req);
 
-    const board = await BoardModel.findById(boardId);
+    const card = await CardModel.findById(cardId).populate('user');
 
-    if (!board) {
-      return res.status(404).json({ message: 'Board not found' });
+    if (!card) {
+      return res.status(404).json({ message: 'Card not found' });
     }
-    if (board.user._id.toString() !== user._id.toString()) {
+    if (card.user._id.toString() !== user._id.toString()) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    const labels = await LabelModel.find({
-      board: board._id,
-    });
-    return res.status(200).json(labels);
+    const comments = await CommentModel.find({
+      card: card._id,
+    }).populate('user');
+    return res.status(200).json(comments);
   } catch (e: any) {
     const message = e.message || e.msg || 'Error';
     logger.error(message);
@@ -47,23 +47,24 @@ router.get('/:boardId', jwtAuthMiddleware, async (req, res) => {
 
 router.post('/', jwtAuthMiddleware, async (req, res) => {
   try {
-    const { boardId, title, color } = req.body;
+    const { boardId, cardId, columnId, text } = req.body;
     const user = getUserFromRequest(req);
 
-    const board = await BoardModel.findById(boardId).populate(['user']);
+    const card = await CardModel.findById(cardId).populate(['user']);
 
-    if (!board) {
-      return res.status(404).json({ message: 'Board not found' });
+    if (!card) {
+      return res.status(404).json({ message: 'Card not found' });
     }
-    if (board.user._id.toString() !== user._id.toString()) {
+    if (card.user._id.toString() !== user._id.toString()) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    const label = await LabelModel.create({
-      title,
-      color,
+    const label = await CommentModel.create({
+      text,
       user: user._id,
-      board: board._id,
+      card: card._id,
+      board: boardId,
+      column: columnId,
     });
     return res.status(200).json(label);
   } catch (e: any) {
@@ -76,28 +77,25 @@ router.post('/', jwtAuthMiddleware, async (req, res) => {
 router.patch('/:id', jwtAuthMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, color } = req.body;
+    const { text } = req.body;
     const user = getUserFromRequest(req);
 
-    const label = await LabelModel.findById(id).populate('user');
+    const comment = await CommentModel.findById(id).populate('user');
 
-    if (!label) {
-      return res.status(404).json({ message: 'Label not found' });
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
     }
-    if (label.user._id.toString() !== user._id.toString()) {
+    if (comment.user._id.toString() !== user._id.toString()) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
     const toUpdate: Record<string, any> = {};
 
-    if (title !== undefined) {
-      toUpdate.title = title;
-    }
-    if (color !== undefined) {
-      toUpdate.color = color;
+    if (text !== undefined) {
+      toUpdate.text = text;
     }
 
-    const updated = await LabelModel.findByIdAndUpdate(id, toUpdate, {
+    const updated = await CommentModel.findByIdAndUpdate(id, toUpdate, {
       new: true,
     });
     return res.status(200).json(updated);
@@ -113,16 +111,16 @@ router.delete('/:id', jwtAuthMiddleware, async (req, res) => {
     const { id } = req.params;
     const user = getUserFromRequest(req);
 
-    const card = await LabelModel.findById(id).populate('user');
+    const comment = await CommentModel.findById(id).populate('user');
 
-    if (!card) {
-      return res.status(404).json({ message: 'Card not found' });
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
     }
-    if (card.user._id.toString() !== user._id.toString()) {
+    if (comment.user._id.toString() !== user._id.toString()) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    await LabelModel.findByIdAndDelete(id);
+    await CommentModel.findByIdAndDelete(id);
     return res.status(200).json({ message: 'removed' });
   } catch (e: any) {
     const message = e.message || e.msg || 'Error';

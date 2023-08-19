@@ -7,7 +7,7 @@ import {
   TransactionModel,
 } from '../models/transaction';
 import { UserModel } from '../models/user';
-import { ChessSkinModel } from '../models/chess-skin';
+import { ChessSkinModel } from '../models/games/chess-skin';
 import { assertCannotReach } from '../helpers/shared/assertCannotReach';
 
 const router = express.Router();

@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { User } from './user';
+import { User } from '../user';
 import { Column } from './column';
 import { Label } from './label';
 

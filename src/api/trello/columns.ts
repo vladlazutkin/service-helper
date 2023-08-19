@@ -2,9 +2,9 @@ import express from 'express';
 import jwtAuthMiddleware from '../../middlewares/jwt.auth.middleware';
 import { getUserFromRequest } from '../../helpers/shared/getUserFromRequest';
 import { logger } from '../../logger';
-import { ColumnModel } from '../../models/column';
-import { BoardModel } from '../../models/board';
-import { CardModel } from '../../models/card';
+import { ColumnModel } from '../../models/trello/column';
+import { BoardModel } from '../../models/trello/board';
+import { CardModel } from '../../models/trello/card';
 
 const router = express.Router();
 

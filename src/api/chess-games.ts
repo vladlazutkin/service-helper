@@ -2,7 +2,7 @@ import express from 'express';
 import jwtAuthMiddleware from '../middlewares/jwt.auth.middleware';
 import { getUserFromRequest } from '../helpers/shared/getUserFromRequest';
 import { logger } from '../logger';
-import { ChessGameModel } from '../models/chess-game';
+import { ChessGameModel } from '../models/games/chess-game';
 
 const router = express.Router();
 

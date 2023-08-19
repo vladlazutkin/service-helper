@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { Board } from './board';
-import { User } from './user';
+import { User } from '../user';
 import { Card } from './card';
 
 export interface Column {

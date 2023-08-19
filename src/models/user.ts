@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
-import { ChessConfig } from './chess-config';
-import { ChessSkin } from './chess-skin';
+import { ChessConfig } from './games/chess-config';
+import { ChessSkin } from './games/chess-skin';
 
 export interface User {
   _id: string;

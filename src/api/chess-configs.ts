@@ -1,8 +1,8 @@
 import express from 'express';
 import { getUserFromRequest } from '../helpers/shared/getUserFromRequest';
 import { logger } from '../logger';
-import { ChessConfigModel } from '../models/chess-config';
-import { ChessSkinModel } from '../models/chess-skin';
+import { ChessConfigModel } from '../models/games/chess-config';
+import { ChessSkinModel } from '../models/games/chess-skin';
 
 const router = express.Router();
 

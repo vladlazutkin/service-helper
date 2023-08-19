@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
-import { User } from './user';
-import { FIGURE_COLOR } from '../interfaces/games/chess';
+import { User } from '../user';
+import { FIGURE_COLOR } from '../../interfaces/games/chess';
 
 export interface ChessGame {
   _id: string;

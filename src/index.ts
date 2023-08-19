@@ -4,7 +4,7 @@ import { server } from './socket';
 import { connectDatabase } from './database';
 import { getStripeWebhookUrl } from './helpers/stripe';
 import { chessSkins } from './constants/chess-skins';
-import { ChessSkinModel } from './models/chess-skin';
+import { ChessSkinModel } from './models/games/chess-skin';
 import { logger } from './logger';
 
 const port = process.env.PORT || 5000;

@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { User } from './user';
+import { User } from '../user';
 import { ChessSkin } from './chess-skin';
 
 export interface ChessConfig {
