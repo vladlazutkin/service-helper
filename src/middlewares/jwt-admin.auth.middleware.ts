@@ -3,8 +3,13 @@ import { NextFunction, Request, Response } from 'express';
 import { UserModel } from '../models/user';
 import { JwtPayload } from '../interfaces/JwtPayload';
 import { CustomRequest } from '../interfaces/CustomRequest';
+import { USER_ROLE } from '../interfaces/roles';
 
-const authenticateJWT = (req: Request, res: Response, next: NextFunction) => {
+const authenticateAdminJWT = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
@@ -22,10 +27,13 @@ const authenticateJWT = (req: Request, res: Response, next: NextFunction) => {
     if (!user) {
       return res.status(401).json({ message: 'INVALID_TOKEN' });
     }
+    if (user.role !== USER_ROLE.ADMIN) {
+      return res.status(401).json({ message: 'ADMIN_ROLE_REQUIRED' });
+    }
     const { password, ...data } = user;
     (req as CustomRequest).user = data;
     next();
   });
 };
 
-export default authenticateJWT;
+export default authenticateAdminJWT;
