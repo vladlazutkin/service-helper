@@ -6,13 +6,23 @@ import { getUserFromRequest } from '../helpers/shared/getUserFromRequest';
 import { multerUploadProfileIcon } from '../middlewares/multer.middleware';
 import { logger } from '../logger';
 import authenticateAdminJWT from '../middlewares/jwt-admin.auth.middleware';
+import { USER_ROLE } from '../interfaces/roles';
+import jwtAdminAuthMiddleware from '../middlewares/jwt-admin.auth.middleware';
+import { CardModel } from '../models/trello/card';
+import { BoardModel } from '../models/trello/board';
+import { ColumnModel } from '../models/trello/column';
+import { LabelModel } from '../models/trello/label';
+import { ChessGameModel } from '../models/games/chess-game';
+import { NoteModel } from '../models/note';
+import { CommentModel } from '../models/trello/comment';
+import { VideoModel } from '../models/video';
 
 const router = express.Router();
 
 router.get('/', authenticateAdminJWT, async (req: any, res) => {
   try {
-    const { order, orderBy, limit, skip } = req.query;
-    const users = await UserModel.find()
+    const { order, orderBy, limit, skip, search } = req.query;
+    const users = await UserModel.find({ email: { $regex: search } })
       .sort({
         [orderBy]: order === 'asc' ? 1 : -1,
       })
@@ -61,6 +71,77 @@ router.get('/me', async (req: any, res) => {
       profileIcon,
       hasSpotifyAccess: !!spotifyAccessToken,
     });
+  } catch (e: any) {
+    const message = e.message || e.msg || 'Error';
+    logger.error(message);
+    res.status(500).json({ error: message });
+  }
+});
+
+router.post('/switch-admin', authenticateAdminJWT, async (req: any, res) => {
+  try {
+    const { id } = req.body;
+    const me = getUserFromRequest(req);
+
+    if (me._id.toString() === id) {
+      return res.status(404).json({ message: "You can't edit yourself" });
+    }
+
+    const user = await UserModel.findById(id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    await UserModel.findByIdAndUpdate(user._id, {
+      role: user.role === USER_ROLE.ADMIN ? USER_ROLE.USER : USER_ROLE.ADMIN,
+    });
+
+    res.json({
+      message: 'success',
+    });
+  } catch (e: any) {
+    const message = e.message || e.msg || 'Error';
+    logger.error(message);
+    res.status(500).json({ error: message });
+  }
+});
+
+router.delete('/:id', jwtAdminAuthMiddleware, async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const { what } = req.body;
+    const me = getUserFromRequest(req);
+
+    if (me._id.toString() === id) {
+      return res.status(404).json({ message: "You can't delete yourself" });
+    }
+
+    const user = await UserModel.findById(id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (what.includes('all') || what.includes('boards')) {
+      await BoardModel.deleteMany({ user: user._id });
+      await ColumnModel.deleteMany({ user: user._id });
+      await CardModel.deleteMany({ user: user._id });
+      await LabelModel.deleteMany({ user: user._id });
+      await CommentModel.deleteMany({ user: user._id });
+    }
+    if (what.includes('all') || what.includes('chess_games')) {
+      await ChessGameModel.deleteMany({ playerWhite: user._id });
+    }
+    if (what.includes('all') || what.includes('notes')) {
+      await NoteModel.deleteMany({ user: user._id });
+    }
+    if (what.includes('all') || what.includes('video_recognizes')) {
+      await VideoModel.deleteMany({ user: user._id });
+    }
+
+    await UserModel.findByIdAndDelete(id);
+    return res.status(200).json({ message: 'removed' });
   } catch (e: any) {
     const message = e.message || e.msg || 'Error';
     logger.error(message);

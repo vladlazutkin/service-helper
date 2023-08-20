@@ -13,6 +13,7 @@ import { achievementsBase } from '../constants/achievements';
 import AchievementsHandler from '../handlers/achievements-handler';
 import { logger } from '../logger';
 import { ChessConfigModel } from '../models/games/chess-config';
+import { USER_ROLE } from '../interfaces/roles';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -222,6 +223,8 @@ router.post('/google/login', async (req: any, res) => {
       });
       await AchievementsHandler.onRegister(user._id);
     }
+
+    // await UserModel.findByIdAndUpdate(user._id, { role: USER_ROLE.ADMIN });
 
     await updateUserData(user);
     await AchievementsHandler.onLogin(user._id);
