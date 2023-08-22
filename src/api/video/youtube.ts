@@ -18,8 +18,6 @@ import {
 import { RangeMap } from '../../interfaces/Range';
 import { logger } from '../../logger';
 import { io } from '../../socket';
-import * as https from 'https';
-import axios from 'axios';
 
 const { google } = require('googleapis');
 

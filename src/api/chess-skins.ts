@@ -69,10 +69,6 @@ router.post('/buy', async (req: any, res) => {
       return res.status(400).json({ message: 'Skin already purchased' });
     }
 
-    // Test
-    //  user.chessSkins?.push(skin);
-    //  await user.save();
-
     // Payout
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],

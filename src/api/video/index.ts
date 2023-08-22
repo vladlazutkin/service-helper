@@ -3,7 +3,6 @@ import { createScheduler, createWorker, LoggerMessage } from 'tesseract.js';
 import { VideoModel } from '../../models/video';
 import { VideoRangeModel } from '../../models/video-range';
 import { getUserFromRequest } from '../../helpers/shared/getUserFromRequest';
-import jwtAuthMiddleware from '../../middlewares/jwt.auth.middleware';
 import multerUpload from '../../middlewares/multer.middleware';
 import { convertToFrames } from '../../helpers/video';
 import { logger } from '../../logger';
@@ -15,7 +14,7 @@ const router = express.Router();
 router.use('/youtube', youtube);
 router.use('/tik-tok', tikTok);
 
-router.get('/', jwtAuthMiddleware, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const user = getUserFromRequest(req);
 
@@ -42,7 +41,7 @@ router.get('/', jwtAuthMiddleware, async (req, res) => {
   }
 });
 
-router.get('/:id', jwtAuthMiddleware, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id: videoId } = req.params;
     if (!videoId) {
@@ -75,7 +74,7 @@ router.get('/:id', jwtAuthMiddleware, async (req, res) => {
   }
 });
 
-router.delete('/:id', jwtAuthMiddleware, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const user = getUserFromRequest(req);

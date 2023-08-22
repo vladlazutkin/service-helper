@@ -1,12 +1,11 @@
 import express from 'express';
-import jwtAuthMiddleware from '../middlewares/jwt.auth.middleware';
 import { getUserFromRequest } from '../helpers/shared/getUserFromRequest';
 import { NoteModel } from '../models/note';
 import { logger } from '../logger';
 
 const router = express.Router();
 
-router.get('/', jwtAuthMiddleware, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const user = getUserFromRequest(req);
 
@@ -19,7 +18,7 @@ router.get('/', jwtAuthMiddleware, async (req, res) => {
   }
 });
 
-router.post('/', jwtAuthMiddleware, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { text } = req.body;
     const user = getUserFromRequest(req);
@@ -33,7 +32,7 @@ router.post('/', jwtAuthMiddleware, async (req, res) => {
   }
 });
 
-router.patch('/:id', jwtAuthMiddleware, async (req, res) => {
+router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { text } = req.body;
@@ -60,7 +59,7 @@ router.patch('/:id', jwtAuthMiddleware, async (req, res) => {
   }
 });
 
-router.delete('/:id', jwtAuthMiddleware, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const user = getUserFromRequest(req);

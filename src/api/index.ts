@@ -12,6 +12,7 @@ import chessGames from './chess-games';
 import chessSkins from './chess-skins';
 import chessConfigs from './chess-configs';
 import stripe from './stripe';
+import notificationSubscriptions from './notification-subscriptions';
 
 const router = express.Router();
 
@@ -19,6 +20,11 @@ router.use('/auth', auth);
 router.use('/stripe', stripe);
 router.use('/spotify', authenticateJWT, spotify);
 router.use('/chess-skins', authenticateJWT, chessSkins);
+router.use(
+  '/notification-subscriptions',
+  authenticateJWT,
+  notificationSubscriptions
+);
 router.use('/chess-configs', authenticateJWT, chessConfigs);
 router.use('/achievements', authenticateJWT, achievements);
 router.use('/chess-games', authenticateJWT, chessGames);

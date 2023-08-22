@@ -1,5 +1,4 @@
 import express from 'express';
-import jwtAuthMiddleware from '../../middlewares/jwt.auth.middleware';
 import { getUserFromRequest } from '../../helpers/shared/getUserFromRequest';
 import { CardModel } from '../../models/trello/card';
 import { CommentModel } from '../../models/trello/comment';
@@ -7,7 +6,7 @@ import { logger } from '../../logger';
 
 const router = express.Router();
 
-router.get('/', jwtAuthMiddleware, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const user = getUserFromRequest(req);
 
@@ -20,7 +19,7 @@ router.get('/', jwtAuthMiddleware, async (req, res) => {
   }
 });
 
-router.get('/:cardId', jwtAuthMiddleware, async (req, res) => {
+router.get('/:cardId', async (req, res) => {
   try {
     const { cardId } = req.params;
     const user = getUserFromRequest(req);
@@ -45,7 +44,7 @@ router.get('/:cardId', jwtAuthMiddleware, async (req, res) => {
   }
 });
 
-router.post('/', jwtAuthMiddleware, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { boardId, cardId, columnId, text } = req.body;
     const user = getUserFromRequest(req);
@@ -74,7 +73,7 @@ router.post('/', jwtAuthMiddleware, async (req, res) => {
   }
 });
 
-router.patch('/:id', jwtAuthMiddleware, async (req, res) => {
+router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { text } = req.body;
@@ -106,7 +105,7 @@ router.patch('/:id', jwtAuthMiddleware, async (req, res) => {
   }
 });
 
-router.delete('/:id', jwtAuthMiddleware, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const user = getUserFromRequest(req);

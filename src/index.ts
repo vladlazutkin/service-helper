@@ -5,6 +5,7 @@ import { connectDatabase } from './database';
 import { getStripeWebhookUrl } from './helpers/stripe';
 import { chessSkins } from './constants/chess-skins';
 import { ChessSkinModel } from './models/games/chess-skin';
+import { createVapidDetails } from './external-api/webpush';
 import { logger } from './logger';
 
 const port = process.env.PORT || 5000;
@@ -30,7 +31,7 @@ const addStripeWebhook = async () => {
   );
 
   await stripe.webhookEndpoints.create({
-    url: getStripeWebhookUrl(), //'https://1a48-185-137-217-66.ngrok-free.app/api/v1/stripe/webhook',
+    url: getStripeWebhookUrl(),
     enabled_events: [
       'checkout.session.async_payment_succeeded',
       'checkout.session.completed',
@@ -42,6 +43,7 @@ const addStripeWebhook = async () => {
 server.listen(port, async () => {
   logger.debug(`Listening: http://localhost:${port}`);
   await connectDatabase();
+  createVapidDetails();
   await addStripeWebhook();
   // updateChessSkins();
 });

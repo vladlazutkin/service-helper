@@ -1,12 +1,11 @@
 import express from 'express';
-import jwtAuthMiddleware from '../middlewares/jwt.auth.middleware';
 import { getUserFromRequest } from '../helpers/shared/getUserFromRequest';
-import { logger } from '../logger';
 import { ChessGameModel } from '../models/games/chess-game';
+import { logger } from '../logger';
 
 const router = express.Router();
 
-router.get('/', jwtAuthMiddleware, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const user = getUserFromRequest(req);
 
@@ -19,7 +18,7 @@ router.get('/', jwtAuthMiddleware, async (req, res) => {
   }
 });
 
-router.delete('/:id', jwtAuthMiddleware, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const user = getUserFromRequest(req);
