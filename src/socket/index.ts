@@ -8,6 +8,7 @@ import jwt from 'jsonwebtoken';
 import { JwtPayload } from '../interfaces/JwtPayload';
 import { UserModel } from '../models/user';
 import { CustomSocket } from '../interfaces/CustomSocket';
+import { initFiles } from './files';
 
 export const server = createServer(app);
 
@@ -15,6 +16,7 @@ export const io = new Server(server, {
   cors: {
     origin: [
       'http://localhost:3000',
+      'http://localhost:3001',
       'https://service-helper-client.vercel.app',
       'https://shelp.vercel.app',
     ],
@@ -25,6 +27,7 @@ export const io = new Server(server, {
 
 io.use(async (socket, next) => {
   const token = socket.handshake.query?.token;
+  (socket as CustomSocket).isDesktop = !!socket.handshake.query?.isDesktop;
 
   if (token) {
     try {
@@ -58,6 +61,7 @@ io.use(async (socket, next) => {
 io.on('connection', (socket) => {
   initChess(io, socket as CustomSocket);
   initCheckers(io, socket as CustomSocket);
+  initFiles(io, socket as CustomSocket);
 
   logger.info('Client connected');
 });
