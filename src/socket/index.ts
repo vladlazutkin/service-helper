@@ -9,6 +9,7 @@ import { JwtPayload } from '../interfaces/JwtPayload';
 import { UserModel } from '../models/user';
 import { CustomSocket } from '../interfaces/CustomSocket';
 import { initFiles } from './files';
+import { initRezka } from './rezka';
 
 export const server = createServer(app);
 
@@ -62,6 +63,7 @@ io.on('connection', (socket) => {
   initChess(io, socket as CustomSocket);
   initCheckers(io, socket as CustomSocket);
   initFiles(io, socket as CustomSocket);
+  initRezka(io, socket as CustomSocket);
 
   logger.info('Client connected');
 });
