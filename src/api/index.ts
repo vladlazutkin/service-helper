@@ -35,7 +35,7 @@ router.use('/trello', authenticateJWT, trello);
 router.use('/note', authenticateJWT, notes);
 router.use('/video', authenticateJWT, videos);
 router.use('/image', authenticateJWT, image);
-router.use('/rezka', authenticateJWT, rezka);
+router.use('/rezka', rezka);
 router.use('/files', authenticateJWT, files);
 
 export default router;
