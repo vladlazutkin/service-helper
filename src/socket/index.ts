@@ -30,40 +30,45 @@ io.use(async (socket, next) => {
   const token = socket.handshake.query?.token;
   (socket as CustomSocket).isDesktop = !!socket.handshake.query?.isDesktop;
 
-  if (token) {
-    try {
-      jwt.verify(
-        token as string,
-        process.env.TOKEN_SECRET!,
-        async (err, userData) => {
-          if (err) {
-            return next();
-          }
+  if (!token) {
+    return next();
+  }
 
-          const { id } = userData as JwtPayload;
-          const user = (await UserModel.findById(id))?.toObject();
-          if (!user) {
-            return next();
-          }
-          const { password, ...data } = user;
-          (socket as CustomSocket).user = data;
-
-          socket.join(user._id);
-
-          next();
+  try {
+    jwt.verify(
+      token as string,
+      process.env.TOKEN_SECRET!,
+      async (err, userData) => {
+        if (err) {
+          return next();
         }
-      );
-    } catch (e) {
-      console.log(e);
-    }
+
+        const { id } = userData as JwtPayload;
+        const user = (await UserModel.findById(id))?.toObject();
+        if (!user) {
+          return next();
+        }
+        const { password, ...data } = user;
+        (socket as CustomSocket).user = data;
+
+        socket.join(user._id);
+
+        next();
+      }
+    );
+  } catch (e) {
+    console.log(e);
   }
 });
 
 io.on('connection', (socket) => {
-  initChess(io, socket as CustomSocket);
-  initCheckers(io, socket as CustomSocket);
-  initFiles(io, socket as CustomSocket);
-  initRezka(io, socket as CustomSocket);
+  const customSocket = socket as CustomSocket;
+  if (customSocket.user) {
+    initChess(io, customSocket);
+    initCheckers(io, customSocket);
+    initFiles(io, customSocket);
+  }
+  initRezka(io, customSocket);
 
   logger.info('Client connected');
 });
