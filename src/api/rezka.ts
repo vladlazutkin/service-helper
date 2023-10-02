@@ -2,8 +2,6 @@ import express from 'express';
 import { logger } from '../logger';
 import axios from 'axios';
 import { clearTrash } from '../helpers/rezka';
-import { execPythonScript } from '../helpers/python';
-const JSON5 = require('json5');
 import parse from 'node-html-parser';
 import { RezkaDataModel } from '../models/rezka-data';
 
@@ -98,12 +96,11 @@ router.get('/get-link', async (req, res) => {
 
     logger.info(`Getting config for query ${queryStr}`);
 
-    const result = await execPythonScript('src/external-api/main.py', [
-      'get_config',
-      link as string,
-    ]);
+    const { data } = await axios(
+      `${process.env.PYTHON_BACKEND_URL}/get-config?url=${link}`
+    );
 
-    const parsed = JSON5.parse(result);
+    const parsed = { ...data };
     parsed.translators = Object.entries(parsed.translators).reduce(
       (acc: any, [key, value]) => {
         return [
@@ -130,6 +127,39 @@ router.get('/get-link', async (req, res) => {
     });
 
     return res.status(200).json(parsed);
+  } catch (e: any) {
+    const message = e.message || e.msg || 'Error';
+    logger.error(message);
+    res.status(500).json({ error: message });
+  }
+});
+
+router.get('/cache', async (req, res) => {
+  try {
+    const cachedData = await RezkaDataModel.find();
+
+    const d = new Date();
+    d.setDate(d.getDate() - 5);
+
+    return res.status(200).json(
+      cachedData.map((a) => ({
+        ...a.toObject(),
+        updatedAt: d.toString(),
+      }))
+    );
+  } catch (e: any) {
+    const message = e.message || e.msg || 'Error';
+    logger.error(message);
+    res.status(500).json({ error: message });
+  }
+});
+
+router.delete('/cache/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await RezkaDataModel.findByIdAndDelete(id);
+
+    return res.status(200).json({ message: 'success' });
   } catch (e: any) {
     const message = e.message || e.msg || 'Error';
     logger.error(message);
