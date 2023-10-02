@@ -48,6 +48,11 @@ router.get('/get-link', async (req, res) => {
           }),
         },
         {
+          proxy: {
+            host: '195.189.62.7',
+            port: 80,
+            protocol: 'http',
+          },
           headers: {
             'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
           },
@@ -56,7 +61,7 @@ router.get('/get-link', async (req, res) => {
 
       logger.info(`Response from rezka: ${JSON.stringify(response)}`);
 
-      if (!response.success) {
+      if (!response.success || !response.url) {
         logger.info(`Error for query ${queryStr}: ${JSON.stringify(response)}`);
         return res.status(500).json({ message: response.message || 'Error' });
       }
@@ -82,10 +87,10 @@ router.get('/get-link', async (req, res) => {
       await RezkaDataModel.deleteMany({
         key: queryStr,
       });
-      await RezkaDataModel.create({
-        key: queryStr,
-        data: JSON.stringify(parsed),
-      });
+      // await RezkaDataModel.create({
+      //   key: queryStr,
+      //   data: JSON.stringify(parsed),
+      // });
 
       logger.info(
         `Video streams for query ${queryStr}: ${JSON.stringify(parsed)}`
@@ -138,15 +143,7 @@ router.get('/cache', async (req, res) => {
   try {
     const cachedData = await RezkaDataModel.find();
 
-    const d = new Date();
-    d.setDate(d.getDate() - 5);
-
-    return res.status(200).json(
-      cachedData.map((a) => ({
-        ...a.toObject(),
-        updatedAt: d.toString(),
-      }))
-    );
+    return res.status(200).json(cachedData);
   } catch (e: any) {
     const message = e.message || e.msg || 'Error';
     logger.error(message);
