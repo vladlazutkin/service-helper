@@ -87,10 +87,10 @@ router.get('/get-link', async (req, res) => {
       await RezkaDataModel.deleteMany({
         key: queryStr,
       });
-      // await RezkaDataModel.create({
-      //   key: queryStr,
-      //   data: JSON.stringify(parsed),
-      // });
+      await RezkaDataModel.create({
+        key: queryStr,
+        data: JSON.stringify(parsed),
+      });
 
       logger.info(
         `Video streams for query ${queryStr}: ${JSON.stringify(parsed)}`
