@@ -1,12 +1,8 @@
 import express from 'express';
-import { createScheduler, createWorker, LoggerMessage } from 'tesseract.js';
 import { VideoModel } from '../../models/video';
 import { VideoRangeModel } from '../../models/video-range';
 import { getUserFromRequest } from '../../helpers/shared/getUserFromRequest';
-import multerUpload, {
-  multerUploadVideo,
-} from '../../middlewares/multer.middleware';
-import { convertToFrames, extractAudioFromVideo } from '../../helpers/video';
+import { multerUploadMemory } from '../../middlewares/multer.middleware';
 import { logger } from '../../logger';
 import youtube from './youtube';
 import tikTok from './tik-tok';
@@ -105,53 +101,53 @@ router.delete('/:id', async (req, res) => {
 });
 
 // TODO:update from youtube recognize
-router.post(
-  '/recognize',
-  multerUpload.single('file'),
-  async (req: any, res) => {
-    try {
-      const folderPath = 'frames/videpl';
-      const files = await convertToFrames(
-        'videos/videoplayback.mp4',
-        folderPath,
-        150
-      );
-
-      const scheduler = createScheduler();
-      const worker = await createWorker({
-        logger: (arg: LoggerMessage) =>
-          logger.debug(`${arg.jobId}-${arg.progress}`),
-      });
-      await worker.loadLanguage('eng');
-      await worker.initialize('eng');
-      scheduler.addWorker(worker);
-
-      const results = await Promise.all(
-        files.map(async (path) => {
-          const rectangle = {
-            left: 0,
-            top: 0,
-            width: 200,
-            height: 200,
-          };
-          return scheduler.addJob('recognize', path, { rectangle });
-        })
-      );
-      await scheduler.terminate();
-
-      const textData = results
-        .map((data) => data.data.text.replaceAll('\n', ' '))
-        .filter((t) => t.length > 10);
-      res.json({
-        text: textData,
-      });
-    } catch (e: any) {
-      const message = e.message || e.msg || 'Error';
-      logger.error(message);
-      res.status(500).json({ error: message });
-    }
-  }
-);
+// router.post(
+//   '/recognize',
+//   multerUpload.single('file'),
+//   async (req: any, res) => {
+//     try {
+//       const folderPath = 'frames/videpl';
+//       const files = await convertToFrames(
+//         'videos/videoplayback.mp4',
+//         folderPath,
+//         150
+//       );
+//
+//       const scheduler = createScheduler();
+//       const worker = await createWorker({
+//         logger: (arg: LoggerMessage) =>
+//           logger.debug(`${arg.jobId}-${arg.progress}`),
+//       });
+//       await worker.loadLanguage('eng');
+//       await worker.initialize('eng');
+//       scheduler.addWorker(worker);
+//
+//       const results = await Promise.all(
+//         files.map(async (path) => {
+//           const rectangle = {
+//             left: 0,
+//             top: 0,
+//             width: 200,
+//             height: 200,
+//           };
+//           return scheduler.addJob('recognize', path, { rectangle });
+//         })
+//       );
+//       await scheduler.terminate();
+//
+//       const textData = results
+//         .map((data) => data.data.text.replaceAll('\n', ' '))
+//         .filter((t) => t.length > 10);
+//       res.json({
+//         text: textData,
+//       });
+//     } catch (e: any) {
+//       const message = e.message || e.msg || 'Error';
+//       logger.error(message);
+//       res.status(500).json({ error: message });
+//     }
+//   }
+// );
 
 router.post('/extract-audio-from-url', async (req: any, res) => {
   try {
@@ -178,24 +174,26 @@ router.post('/extract-audio-from-url', async (req: any, res) => {
       });
     });
 
-    let audioPath = `audios/${uuidv4()}.mp3`;
-    await extractAudioFromVideo(path, audioPath);
+    const buffer = fs.readFileSync(path);
+
+    logger.info('Sending file to the ffmpeg service');
+    const response = await axios.post(
+      `${process.env.FFMPEG_BACKEND_URL}/videos/extract-audio`,
+      buffer,
+      {
+        responseType: 'stream',
+        headers: {
+          'Content-Type': 'application/octet-stream',
+        },
+      }
+    );
 
     fs.unlinkSync(path);
 
-    const stat = fs.statSync(audioPath);
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Content-Length', response.headers['content-length']);
 
-    res.writeHead(200, {
-      'Content-Type': 'audio/mpeg',
-      'Content-Length': stat.size,
-    });
-
-    const readStream = fs.createReadStream(audioPath);
-    readStream.pipe(res);
-
-    readStream.on('end', () => {
-      fs.unlinkSync(audioPath);
-    });
+    response.data.pipe(res);
   } catch (e: any) {
     const message = e.message || e.msg || 'Error';
     logger.error(message);
@@ -205,29 +203,25 @@ router.post('/extract-audio-from-url', async (req: any, res) => {
 
 router.post(
   '/extract-audio-from-file',
-  multerUploadVideo.single('file'),
+  multerUploadMemory.single('file'),
   async (req: any, res) => {
     try {
-      const path = req.file.path;
+      logger.info('Sending file to the ffmpeg service');
+      const response = await axios.post(
+        `${process.env.FFMPEG_BACKEND_URL}/videos/extract-audio`,
+        req.file.buffer,
+        {
+          responseType: 'stream',
+          headers: {
+            'Content-Type': 'application/octet-stream',
+          },
+        }
+      );
 
-      const audioPath = `audios/${uuidv4()}.mp3`;
-      await extractAudioFromVideo(path, audioPath);
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Content-Length', response.headers['content-length']);
 
-      fs.unlinkSync(path);
-
-      const stat = fs.statSync(audioPath);
-
-      res.writeHead(200, {
-        'Content-Type': 'audio/mpeg',
-        'Content-Length': stat.size,
-      });
-
-      const readStream = fs.createReadStream(audioPath);
-      readStream.pipe(res);
-
-      readStream.on('end', () => {
-        fs.unlinkSync(audioPath);
-      });
+      response.data.pipe(res);
     } catch (e: any) {
       const message = e.message || e.msg || 'Error';
       logger.error(message);

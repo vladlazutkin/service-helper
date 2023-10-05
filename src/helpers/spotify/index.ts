@@ -3,7 +3,7 @@ import { logger } from '../../logger';
 import { UserModel } from '../../models/user';
 import { createLoggedInSpotifyApi } from '../../external-api/spotify';
 
-const getRedirectUrl = () => {
+export const getRedirectUrl = () => {
   if (process.env.NODE_ENV === 'production') {
     return `${process.env.PROD_URL}/api/v1/auth/spotify/callback`;
   }

@@ -1,10 +1,11 @@
 import SpotifyWebApi from 'spotify-web-api-node';
+import { getRedirectUrl } from '../helpers/spotify';
 require('dotenv').config();
 
 export const spotifyApi = new SpotifyWebApi({
   clientId: process.env.CLIENT_ID,
   clientSecret: process.env.CLIENT_SECRET,
-  redirectUri: `http://localhost:${process.env.PORT}/api/v1/spotify/callback`,
+  redirectUri: getRedirectUrl(),
 });
 
 export const createLoggedInSpotifyApi = (
