@@ -43,10 +43,10 @@
     "spotify-web-api-node": "^5.0.2",
     "stripe": "^12.17.0",
     "tesseract.js": "^4.1.1",
+    "typescript": "<5.1.0",
     "uuid": "^9.0.0",
     "web-push": "^3.6.4",
     "winston": "^3.10.0",
-    "typescript": "<5.1.0",
     "ytdl-core": "^4.11.5"
   },
   "devDependencies": {

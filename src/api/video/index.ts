@@ -8,10 +8,12 @@ import { convertToFrames } from '../../helpers/video';
 import { logger } from '../../logger';
 import youtube from './youtube';
 import tikTok from './tik-tok';
+import instagram from './instagram';
 
 const router = express.Router();
 
 router.use('/youtube', youtube);
+router.use('/instagram', instagram);
 router.use('/tik-tok', tikTok);
 
 router.get('/', async (req, res) => {
