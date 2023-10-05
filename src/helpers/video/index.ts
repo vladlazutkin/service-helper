@@ -131,12 +131,24 @@ export const downloadInstagram = (urlMedia: string) =>
           }
         })
         .catch(function (error) {
+          console.log(error);
           reject(error.message);
         });
     } catch (e: any) {
       reject(e.message);
     }
   });
+
+export const extractAudioFromVideo = async (
+  path: string,
+  audioPath: string
+) => {
+  logger.info('Extracting audio from video');
+  const video = await new ffmpeg(path);
+  const data = await video.fnExtractSoundToMP3(audioPath);
+  logger.info('Audio extracted');
+  return data;
+};
 
 export const prepareDimensions = (dimensions: Dimensions): Dimensions => ({
   top: Math.round(dimensions.top),

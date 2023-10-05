@@ -11,7 +11,9 @@ images
 videos
 frames
 profile
+audios
 !profile/.gitkeep
+!audios/.gitkeep
 !videos/.gitkeep
 !frames/.gitkeep
 !images/.gitkeep

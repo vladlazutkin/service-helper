@@ -27,4 +27,17 @@ const profileIconsStorage = multer.diskStorage({
 
 export const multerUploadProfileIcon = multer({ storage: profileIconsStorage });
 
+const videosStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'videos/');
+  },
+  filename: (req, file, cb) => {
+    const extArray = file.mimetype.split('/');
+    const extension = extArray[extArray.length - 1];
+    cb(null, `${uuidv4()}.${extension}`);
+  },
+});
+
+export const multerUploadVideo = multer({ storage: videosStorage });
+
 export default multerUpload;

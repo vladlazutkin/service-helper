@@ -3,12 +3,17 @@ import { createScheduler, createWorker, LoggerMessage } from 'tesseract.js';
 import { VideoModel } from '../../models/video';
 import { VideoRangeModel } from '../../models/video-range';
 import { getUserFromRequest } from '../../helpers/shared/getUserFromRequest';
-import multerUpload from '../../middlewares/multer.middleware';
-import { convertToFrames } from '../../helpers/video';
+import multerUpload, {
+  multerUploadVideo,
+} from '../../middlewares/multer.middleware';
+import { convertToFrames, extractAudioFromVideo } from '../../helpers/video';
 import { logger } from '../../logger';
 import youtube from './youtube';
 import tikTok from './tik-tok';
 import instagram from './instagram';
+import axios from 'axios';
+import fs, { createWriteStream } from 'fs';
+import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
 
@@ -139,6 +144,89 @@ router.post(
         .filter((t) => t.length > 10);
       res.json({
         text: textData,
+      });
+    } catch (e: any) {
+      const message = e.message || e.msg || 'Error';
+      logger.error(message);
+      res.status(500).json({ error: message });
+    }
+  }
+);
+
+router.post('/extract-audio-from-url', async (req: any, res) => {
+  try {
+    const { url } = req.body;
+
+    const path = `videos/${uuidv4()}`;
+    const writer = createWriteStream(path);
+
+    logger.info('Getting video from remote');
+    await axios(url, { responseType: 'stream' }).then((response) => {
+      return new Promise((resolve, reject) => {
+        response.data.pipe(writer);
+        let error: any = null;
+        writer.on('error', (err: any) => {
+          error = err;
+          writer.close();
+          reject(err);
+        });
+        writer.on('close', () => {
+          if (!error) {
+            resolve(true);
+          }
+        });
+      });
+    });
+
+    let audioPath = `audios/${uuidv4()}.mp3`;
+    await extractAudioFromVideo(path, audioPath);
+
+    fs.unlinkSync(path);
+
+    const stat = fs.statSync(audioPath);
+
+    res.writeHead(200, {
+      'Content-Type': 'audio/mpeg',
+      'Content-Length': stat.size,
+    });
+
+    const readStream = fs.createReadStream(audioPath);
+    readStream.pipe(res);
+
+    readStream.on('end', () => {
+      fs.unlinkSync(audioPath);
+    });
+  } catch (e: any) {
+    const message = e.message || e.msg || 'Error';
+    logger.error(message);
+    res.status(500).json({ error: message });
+  }
+});
+
+router.post(
+  '/extract-audio-from-file',
+  multerUploadVideo.single('file'),
+  async (req: any, res) => {
+    try {
+      const path = req.file.path;
+
+      const audioPath = `audios/${uuidv4()}.mp3`;
+      await extractAudioFromVideo(path, audioPath);
+
+      fs.unlinkSync(path);
+
+      const stat = fs.statSync(audioPath);
+
+      res.writeHead(200, {
+        'Content-Type': 'audio/mpeg',
+        'Content-Length': stat.size,
+      });
+
+      const readStream = fs.createReadStream(audioPath);
+      readStream.pipe(res);
+
+      readStream.on('end', () => {
+        fs.unlinkSync(audioPath);
       });
     } catch (e: any) {
       const message = e.message || e.msg || 'Error';
