@@ -28,7 +28,7 @@ export const initBot = () => {
           videoBitrate: 1024,
           videoCodec: 'libx264',
           // size: `${data.images[0].width}x${data.images[0].height}`,
-          size: `640x`,
+          size: `480x640`,
           audioBitrate: '128k',
           audioChannels: 2,
           format: 'mp4',
