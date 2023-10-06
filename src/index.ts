@@ -1,3 +1,5 @@
+import { initBot } from './telegram-bot';
+
 require('dotenv').config();
 import Stripe from 'stripe';
 import { server } from './socket';
@@ -45,5 +47,6 @@ server.listen(port, async () => {
   await connectDatabase();
   createVapidDetails();
   await addStripeWebhook();
+  await initBot();
   // updateChessSkins();
 });

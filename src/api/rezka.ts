@@ -1,9 +1,10 @@
 import express from 'express';
 import { logger } from '../logger';
-import axios from 'axios';
 import { clearTrash } from '../helpers/rezka';
 import parse from 'node-html-parser';
 import { RezkaDataModel } from '../models/rezka-data';
+import { getCdnSeries, searchRezka } from '../external-api/rezka';
+import { getConfig } from '../external-api/python';
 
 const router = express.Router();
 
@@ -36,28 +37,13 @@ router.get('/get-link', async (req, res) => {
     ) {
       logger.info(`Getting video streams for query ${queryStr}}`);
 
-      const { data: response } = await axios.post(
-        `https://rezka.ag/ajax/get_cdn_series/?t=${+new Date()}`,
-        {
-          id,
-          translator_id: translatorId,
-          action: type === 'video.movie' ? 'get_movie' : 'get_stream',
-          ...(type !== 'video.movie' && {
-            season: season,
-            episode: episode,
-          }),
-        },
-        {
-          proxy: {
-            host: '195.189.62.7',
-            port: 80,
-            protocol: 'http',
-          },
-          headers: {
-            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-          },
-        }
-      );
+      const { data: response } = await getCdnSeries({
+        translatorId: translatorId as string,
+        type: type as string,
+        id: id as string,
+        season: season as string,
+        episode: episode as string,
+      });
 
       logger.info(`Response from rezka: ${JSON.stringify(response)}`);
 
@@ -101,9 +87,7 @@ router.get('/get-link', async (req, res) => {
 
     logger.info(`Getting config for query ${queryStr}`);
 
-    const { data } = await axios(
-      `${process.env.PYTHON_BACKEND_URL}/get-config?url=${link}`
-    );
+    const { data } = await getConfig(link as string);
 
     const parsed = { ...data };
     parsed.translators = Object.entries(parsed.translators).reduce(
@@ -189,9 +173,7 @@ router.get('/search', async (req, res) => {
       return res.status(200).json(JSON.parse(cachedData.data));
     }
 
-    const { data } = await axios.get(
-      `https://rezka.ag/search/?do=search&subaction=search&q=${search}`
-    );
+    const { data } = await searchRezka(search as string);
 
     const root = parse(data);
 

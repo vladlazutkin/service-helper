@@ -1,18 +1,13 @@
 import express from 'express';
 import { logger } from '../../logger';
-import axios from 'axios';
+import { getTikTokVideo } from '../../external-api/tiklydown';
 
 const router = express.Router();
 
 router.post('/download', async (req, res) => {
   try {
     const { link } = req.body;
-    const { data } = await axios.get(
-      'https://api.tiklydown.eu.org/api/download',
-      {
-        params: { url: link },
-      }
-    );
+    const { data } = await getTikTokVideo(link);
 
     res.json(data);
   } catch (e: any) {

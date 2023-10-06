@@ -10,6 +10,7 @@ import instagram from './instagram';
 import axios from 'axios';
 import fs, { createWriteStream } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import { extractAudio } from '../../external-api/ffmeg';
 
 const router = express.Router();
 
@@ -177,16 +178,7 @@ router.post('/extract-audio-from-url', async (req: any, res) => {
     const buffer = fs.readFileSync(path);
 
     logger.info('Sending file to the ffmpeg service');
-    const response = await axios.post(
-      `${process.env.FFMPEG_BACKEND_URL}/videos/extract-audio`,
-      buffer,
-      {
-        responseType: 'stream',
-        headers: {
-          'Content-Type': 'application/octet-stream',
-        },
-      }
-    );
+    const response = await extractAudio(buffer);
 
     fs.unlinkSync(path);
 
@@ -207,16 +199,7 @@ router.post(
   async (req: any, res) => {
     try {
       logger.info('Sending file to the ffmpeg service');
-      const response = await axios.post(
-        `${process.env.FFMPEG_BACKEND_URL}/videos/extract-audio`,
-        req.file.buffer,
-        {
-          responseType: 'stream',
-          headers: {
-            'Content-Type': 'application/octet-stream',
-          },
-        }
-      );
+      const response = await extractAudio(req.file.buffer);
 
       res.setHeader('Content-Type', 'audio/mpeg');
       res.setHeader('Content-Length', response.headers['content-length']);

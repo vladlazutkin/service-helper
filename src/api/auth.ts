@@ -6,7 +6,7 @@ import { OAuth2Client } from 'google-auth-library';
 import jwtAuthMiddleware from '../middlewares/jwt.auth.middleware';
 import { buildSpotifyCallbackUrl } from '../helpers/spotify';
 import { getUserFromRequest } from '../helpers/shared/getUserFromRequest';
-import { spotifyApi } from '../external-api/spotify';
+import { createSpotifyApi } from '../external-api/spotify';
 import { User, UserModel } from '../models/user';
 import { AchievementModel } from '../models/achievement';
 import { achievementsBase } from '../constants/achievements';
@@ -172,7 +172,7 @@ router.get('/spotify/callback', async (req, res) => {
       });
     }
 
-    const data = await spotifyApi.authorizationCodeGrant(
+    const data = await createSpotifyApi().authorizationCodeGrant(
       req.query.code as string
     );
 
