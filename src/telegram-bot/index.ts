@@ -20,15 +20,17 @@ export const initBot = () => {
       } else if (data.images) {
         const images = data.images.map((image: { url: string }) => image.url);
 
+        const aspect = data.images[0].height / data.images[0].width;
+
         const videoOptions = {
           fps: 25,
-          loop: Math.floor(data.music.duration / images.length),
+          loop: Math.max(Math.floor(data.music.duration / images.length), 3),
           transition: false,
           transitionDuration: 0,
           videoBitrate: 1024,
           videoCodec: 'libx264',
           // size: `${data.images[0].width}x${data.images[0].height}`,
-          size: `480x640`,
+          size: `480x${aspect * 480}`,
           audioBitrate: '128k',
           audioChannels: 2,
           format: 'mp4',
